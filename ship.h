@@ -1,0 +1,36 @@
+#pragma once
+#ifndef SHIP_H
+#define SHIP_H
+#include <SDL2/SDL.h>
+#include "super_header.h"
+
+int FacingX(Facing facing);
+int FacingY(Facing facing);
+
+typedef struct __ship
+{
+    Uint8 x : 4, y : 4;
+    Uint8 facing : 2;
+    Color color;
+} Ship;
+
+typedef void (*ShipFunc)(Ship *ship);
+
+void DestroyShip(Ship *ship);
+void VerifyShip(Ship *ship);
+void CopyShip(Ship *ship, Ship *ships);
+
+void MoveShip(void *data);
+void TurnRight(Ship *ship);
+void TurnLeft(Ship *ship);
+void UpdateShips(Ship *ship);
+void DrawShip(void *data);
+
+void ColorShip(Ship *ship, Uint32 color);
+
+Ship* CreateShip(Uint8 x, Uint8 y, Facing facing);
+
+// By convention this should only be used on the "lead" ship
+//void FuncOnShips(Ship *ship, ShipFunc func);
+
+#endif // SHIP_H
