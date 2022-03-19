@@ -30,8 +30,8 @@ void OutlineTile(Uint8 x, Uint8 y)
     Uint8 w = copy.rectWidth;
     Uint8 h = copy.rectHeight;
     Uint8 s = copy.spacing;
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x80, 0x80, 0xFF);
     SDL_Rect rect = {copy.basePointX + x * (w + s) - s,
                     copy.basePointY + y * (h + s) - s, w + 2 * s, h + 2 * s};
+    SDL_SetRenderDrawColor(renderer, 0x00, 0x80, 0x80, 0xFF);
     SDL_RenderFillRect(renderer, &rect);
 }

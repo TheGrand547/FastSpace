@@ -16,7 +16,7 @@ Array* ArrayCreate(unsigned int size)
     Array* array = (Array*) calloc(1, sizeof(Array));
     if (array)
     {
-        array->size = exp2(ceil(log2(size ? 1 : size)));
+        array->size = exp2(ceil(log2(size ? size : 1)));
         array->array = (void**) calloc(size, sizeof(void*) * array->size);
         array->length = 0;
     }

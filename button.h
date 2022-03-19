@@ -14,6 +14,7 @@ typedef struct
 } Button;
 
 void VoidButton();
+void DrawButton(Button *button);
 
 Button *ButtonCreate(SDL_Rect rect, ButtonFunc func);
 int ButtonCheck(Button *button, SDL_Event *e);

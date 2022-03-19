@@ -1,0 +1,15 @@
+#pragma once
+#ifndef FLAGS_H
+#define FLAGS_H
+#include <SDL2/SDL.h>
+#define HARDWARE 1
+#define SOFTWARE !HARDWARE
+
+#define WINDOW_FLAGS SDL_WINDOW_SHOWN
+
+#if SOFTWARE == 1
+#define RENDERER_FLAGS SDL_RENDERER_SOFTWARE
+#else // SOFTWARE == 1
+#define RENDERER_FLAGS SDL_RENDERER_ACCELERATED
+#endif // SOFTWARE == 1
+#endif // FLAGS_H

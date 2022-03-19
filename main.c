@@ -5,9 +5,11 @@
 #include "bullet.h"
 #include "button.h"
 #include "constants.h"
+#include "draw.h"
 #include "ship.h"
 #include "super_header.h"
 #include "array.h"
+#include "flags.h"
 
 #define WIDTH 10
 #define HEIGHT 10
@@ -17,15 +19,13 @@
 
 #define SPACING 5
 
-// Gamin
-#define WINDOW_SIZE_X WIDTH * (RECT_X + SPACING) - SPACING + 200
-#define WINDOW_SIZE_Y HEIGHT * (RECT_Y + SPACING) - SPACING
-
 static SDL_Renderer *renderer;
 static SDL_Window *window;
 static Field field = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
 
 typedef enum {PLAYER, AI} Turn;
+unsigned int WindowSizeX();
+unsigned int WindowSizeY();
 
 int init();
 
@@ -78,13 +78,12 @@ int main(int argc, char **argv)
             {
                 loop = 0;
             }
-            if (turn == PLAYER && e.type == SDL_MOUSEBUTTONDOWN && ButtonCheck(button, &e))
+            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER  && ButtonCheck(button, &e))
             {
                 turn = AI;
                 turnTimer = SDL_GetTicks();
-                turnIndex = 1; // TODO: Separate lists for each so this lazy hack isn't required
+                turnIndex = 1; // TODO: Separate lists for each so this lazy hack(the 1 that is) isn't required
             }
-
             if (e.type == SDL_KEYDOWN)
             {
                 // keyboard
@@ -107,9 +106,11 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_UP:
                         field.spacing++;
+                        SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
                         break;
                     case SDL_SCANCODE_DOWN:
                         field.spacing--;
+                        SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
                         break;
                     default:
                         break;
@@ -120,7 +121,6 @@ int main(int argc, char **argv)
         {
             for (unsigned int i = 0; i < ArrayLength(ships); i++)
             {
-                Ship *s;
                 if ((s = (Ship*) ArrayElement(ships, i)))
                 {
                     OutlineTile(s->x + FacingX(s->facing), s->y + FacingY(s->facing));
@@ -168,9 +168,10 @@ int init()
     int result = SDL_Init(SDL_INIT_EVERYTHING);
     if (!result)
     {
-        result = SDL_CreateWindowAndRenderer(WINDOW_SIZE_X, WINDOW_SIZE_Y,
-                                              SDL_RENDERER_ACCELERATED, &window, &renderer);
-        SDL_SetWindowTitle(window, "Fast Space Thing");
+        window = SDL_CreateWindow("Fast Space Thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                  WindowSizeX(), WindowSizeY(), WINDOW_FLAGS);
+        renderer = SDL_CreateRenderer(window, -1, RENDERER_FLAGS);
+        result = !window && !renderer;
         SDL_Surface *image = SDL_LoadBMP("nerd.bmp");
         if (image)
             SDL_SetWindowIcon(window, image);
@@ -197,4 +198,14 @@ SDL_Window* GetWindow()
 Field* GetField()
 {
     return &field;
+}
+
+unsigned int WindowSizeX()
+{
+    return field.width * (field.rectWidth + field.spacing) - field.spacing + 200;
+}
+
+unsigned int WindowSizeY()
+{
+    return field.height * (field.rectHeight + field.spacing) - field.spacing;
 }

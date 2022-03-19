@@ -14,7 +14,7 @@ Button *ButtonCreate(SDL_Rect rect, ButtonFunc func)
 int ButtonCheck(Button *button, SDL_Event *e)
 {
     if (!button || !e)
-        return;
+        return 0;
     SDL_Point p = {e->button.x, e->button.y};
     int result = SDL_PointInRect(&p, &button->rect);
     if (result)
