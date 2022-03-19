@@ -82,8 +82,8 @@ void MoveShip(void *data)
     Ship *ship = data;
     ship->x += FacingX((Facing) ship->facing);
     ship->y += FacingY((Facing) ship->facing);
-    ship->x %= GetField()->width;
-    ship->y %= GetField()->height;
+    // TODO: Some cleanup is required if it moves off the playfield,
+    // will be handled in a different function
 }
 
 void TurnRight(Ship *ship)
