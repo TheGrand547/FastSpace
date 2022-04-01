@@ -124,6 +124,16 @@ void ColorShip(Ship *ship, Uint32 color)
                     &ship->color.g, &ship->color.b, &ship->color.a);
 }
 
+SDL_Point ShipNextTile(Ship *ship)
+{
+    SDL_Point next = (SDL_Point) {0, 0};
+    if (ship)
+    {
+        next = (SDL_Point) {ship->x + FacingX(ship->facing), ship->y + FacingY(ship->facing)};
+    }
+    return next;
+}
+
 Ship* CreateShip(Uint8 x, Uint8 y, Facing facing)
 {
     Ship *ship = (Ship*) calloc(1, sizeof(Ship));

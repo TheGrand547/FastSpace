@@ -80,6 +80,15 @@ void ArrayIterate(Array *array, ArrayFunc func)
         func(array->array[i]);
 }
 
+void **ArrayReference(Array *array, unsigned int index)
+{
+    if (!array)
+        return NULL;
+    assert(array->length > index);
+    return (void**) array->array + index;
+}
+
+// Feel this like could somehow be wrapped into a call to ArrayReference but that might be a bad idea
 void *ArrayElement(Array *array, unsigned int index)
 {
     if (!array)
@@ -122,7 +131,7 @@ void ArrayDeleteRange(Array *array, unsigned int start, unsigned int end)
     }
 }
 
-void* ArrayPop(Array *array)
+void *ArrayPop(Array *array)
 {
     void *value = NULL;
     if (array && array->array)

@@ -11,6 +11,7 @@ typedef struct __ship
 {
     Uint8 x : 4, y : 4;
     Uint8 facing : 2;
+    // 6 Uint8 bits left for whatever purpose i need them 4
     Color color;
 } Ship;
 
@@ -29,7 +30,7 @@ void DrawShip(void *data);
 void ColorShip(Ship *ship, Uint32 color);
 
 Ship* CreateShip(Uint8 x, Uint8 y, Facing facing);
-
+SDL_Point ShipNextTile(Ship *ship); // TODO: standardize these names you brainlet
 // By convention this should only be used on the "lead" ship
 //void FuncOnShips(Ship *ship, ShipFunc func);
 

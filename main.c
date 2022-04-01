@@ -27,6 +27,24 @@ typedef enum {PLAYER, AI} Turn;
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 
+SDL_atomic_t frames;
+
+/* From https://wiki.libsdl.org/SDL_atomic_t */
+/* Calculate and display the average framerate over the set interval */
+Uint32 fps_timer_callback(Uint32 interval, void *data)
+{
+    const float f = SDL_AtomicGet(&frames);
+    const float iv = interval * 0.001f;
+
+    /* Note: the thread safety of printf is ambiguous across platforms */
+    printf("%.2f\tfps\n", f / iv);
+
+    /* Reset frame counter */
+    SDL_AtomicSet(&frames, 0);
+
+    return interval;
+}
+
 int init();
 
 int main(int argc, char **argv)
@@ -42,13 +60,15 @@ int main(int argc, char **argv)
         printf("SDL failed to initialize: %s\n", SDL_GetError());
         return -1;
     }
+#ifdef LIMITED_FPS
     Uint32 time;
+#endif // LIMITED_FPS
     Array* ships = ArrayNew();
     Ship *player = CreateShip(0, 0, RIGHT);
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
-    ArrayAppend(ships, player);
 
+    printf("%zu\n", sizeof(Ship));
     printf("%p\n", (void*)player);
     printf("%p\n", (**(void***) ships));
 
@@ -67,9 +87,18 @@ int main(int argc, char **argv)
     Uint32 turnTimer = 0;
     unsigned int turnIndex = 0;
 
+    struct
+    {
+        Uint8 switchTurn : 1; // 7 unused
+        Uint8 windowSize : 1;
+    } flags;
+
+    SDL_AddTimer(2000, fps_timer_callback, NULL);
     while (loop)
     {
+#ifdef LIMITED_FPS
         time = SDL_GetTicks();
+#endif // LIMITED_FPS
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
         while (SDL_PollEvent(&e))
@@ -78,15 +107,12 @@ int main(int argc, char **argv)
             {
                 loop = 0;
             }
-            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER  && ButtonCheck(button, &e))
+            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && ButtonCheck(button, &e))
             {
-                turn = AI;
-                turnTimer = SDL_GetTicks();
-                turnIndex = 1; // TODO: Separate lists for each so this lazy hack(the 1 that is) isn't required
+                flags.switchTurn = 1;
             }
             if (e.type == SDL_KEYDOWN)
             {
-                // keyboard
                 switch (e.key.keysym.scancode)
                 {
                     case SDL_SCANCODE_H:
@@ -99,31 +125,48 @@ int main(int argc, char **argv)
                         TurnRight(player);
                         break;
                     case SDL_SCANCODE_SPACE:
-                        ArrayIterate(ships, MoveShip);
-                        //TurnRight(player);
-                        //TurnLeft(player->next);
-                        //player = VerifyShip(player);
+                        flags.switchTurn = (turn == PLAYER);
                         break;
                     case SDL_SCANCODE_UP:
                         field.spacing++;
-                        SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
+                        flags.windowSize = 1;
                         break;
                     case SDL_SCANCODE_DOWN:
                         field.spacing--;
-                        SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
+                        flags.windowSize = 1;
                         break;
                     default:
                         break;
                 }
             }
         }
+        if (flags.windowSize)
+        {
+            if (!field.spacing)
+                field.spacing = 1;
+            flags.windowSize = 0;
+            SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
+            button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
+            button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
+        }
+        if (flags.switchTurn)
+        {
+            flags.switchTurn = 0;
+            MoveShip(player);
+            // TODO: get the players choice thingy
+            turn = AI;
+            turnTimer = SDL_GetTicks();
+            turnIndex = 0;
+        }
+        // TODO: This should be placed elsewhere
         if (turn == PLAYER)
         {
             for (unsigned int i = 0; i < ArrayLength(ships); i++)
             {
                 if ((s = (Ship*) ArrayElement(ships, i)))
                 {
-                    OutlineTile(s->x + FacingX(s->facing), s->y + FacingY(s->facing));
+                    SDL_Point point = ShipNextTile(s);
+                    OutlineTile(point.x, point.y);
                 }
             }
         }
@@ -146,19 +189,20 @@ int main(int argc, char **argv)
             }
         }
         DrawField(&field);
+        DrawShip(player);
         ArrayIterate(ships, DrawShip);
         DrawBullet(zoop);
         DrawButton(button);
         SDL_RenderPresent(renderer);
-#if LIMITED_FPS == 1
+        SDL_AtomicAdd(&frames, 1);
+#ifdef LIMITED_FPS
         if (SDL_GetTicks() - time <= 2)
             SDL_Delay(1);
-#endif // UNLIMITED_FPS
+#endif // LIMITED_FPS
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    ArrayClean(ships);
     ArrayPurge(&ships);
     return 0;
 }

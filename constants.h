@@ -1,8 +1,7 @@
 #pragma once
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
-// maybe unused?
 
-#define LIMITED_FPS 1
+#define LIMITED_FPS
 
 #endif // CONSTANTS_H
