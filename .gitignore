@@ -54,3 +54,4 @@ FastSpace.layout
 FastSpace.cbp
 FastSpace.depend
 bin/*
+*.bak

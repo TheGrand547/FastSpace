@@ -7,11 +7,13 @@
 int FacingX(Facing facing);
 int FacingY(Facing facing);
 
+// Size of these is somewhat irrelevant as they'll only be passed via pointer
+// wish I could have small pointers or something
 typedef struct __ship
 {
     Uint8 x : 4, y : 4;
     Uint8 facing : 2;
-    // 6 Uint8 bits left for whatever purpose i need them 4
+    // 6 Uint8 bits left for whatever purpose i need them for
     Color color;
 } Ship;
 
