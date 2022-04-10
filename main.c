@@ -65,16 +65,21 @@ int main(int argc, char **argv)
 #endif // LIMITED_FPS
     Array* ships = ArrayNew();
     Ship *player = CreateShip(0, 0, RIGHT);
+    player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
 
+
+    // I don't know why these are here
     printf("%zu\n", sizeof(Ship));
     printf("%p\n", (void*)player);
     printf("%p\n", (**(void***) ships));
 
     printf("player\n");
     ArrayAppend(ships, CreateShip(1, 3, LEFT));
-    ArrayAppend(ships, CreateShip(2, 3, RIGHT));
+    ArrayAppend(ships, CreateShip(4, 3, RIGHT));
+    for (unsigned int i = 0; i < ArrayLength(ships); i++)
+        ((Ship*)ArrayElement(ships, i))->type = CIRCLE;
 
     // This is bad
     Bullet *zoop = CreateShip(9, 5, RIGHT);
@@ -89,7 +94,7 @@ int main(int argc, char **argv)
 
     struct
     {
-        Uint8 switchTurn : 1; // 7 unused
+        Uint8 switchTurn : 1; // 6 unused
         Uint8 windowSize : 1;
     } flags;
 
@@ -176,9 +181,10 @@ int main(int argc, char **argv)
             {
                 if (turnIndex < ArrayLength(ships))
                 {
-                    MoveShip(ArrayElement(ships, turnIndex));
-                    // TODO: AI will go here
-                    // TODO: Maybe verify they're correct here or something? idk
+                    s = ArrayElement(ships, turnIndex);
+                    MoveShip(s);
+                    ActivateShip(s); // Wowie it's ai timer
+                    // TODO: Maybe verify they're not in the same tile as something else
                     turnIndex++;
                     turnTimer = SDL_GetTicks();
                 }

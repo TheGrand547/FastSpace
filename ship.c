@@ -2,6 +2,52 @@
 #include <stdio.h>
 #include "draw.h"
 
+static ActionFunc ActionMap[] = {NoneShip, CircleShip};
+
+void ActivateShip(void *data)
+{
+    if (!data)
+        return;
+    Ship *ship = (Ship*) data;
+    switch (ActionMap[ship->type](ship))
+    {
+        case SHOOT:
+        {
+            SDL_Point s = ShipNextTile(ship);
+            printf("ZOOPING %i %i\n", s.x, s.y);
+            break;
+        }
+        case TURNLEFT:
+            TurnLeft(ship);
+            break;
+        case TURNRIGHT:
+            TurnRight(ship);
+            break;
+        default:
+            break;
+    }
+}
+
+Action NoneShip(Ship *ship)
+{
+    return NONE;
+}
+
+Action CircleShip(Ship *ship)
+{
+    Action value = TURNRIGHT;
+    if (ship->counter)
+    {
+        ship->counter--;
+    }
+    else
+    {
+        ship->counter = 1;
+        value = SHOOT;
+    }
+    return value;
+}
+
 int FacingX(Facing facing)
 {
     int value = 0;
@@ -28,52 +74,6 @@ void DestroyShip(Ship *ship)
     if (ship)
         free(ship);
 }
-
-// Destroy ships that are no longer valid
-/*
-Ship* VerifyShip(Ship *head)
-{
-    if (!head)
-        return NULL;
-    int destroy = 0;
-    Ship *ship = head;
-    Ship *pointer;
-    // Sloppy, even by my standards
-    while (ship)
-    {
-        destroy = 0;
-        pointer = ship->next;
-        while (pointer)
-        {
-            if (ship != pointer &&
-                ship->x == pointer->x && ship->y == pointer->y)
-            {
-                pointer = DestroyShip(pointer);
-                destroy = 1;
-            }
-            else
-            {
-                pointer = pointer->next;
-            }
-        }
-        if (destroy)
-        {
-            if (ship == head)
-            {
-                head = DestroyShip(ship);
-                ship = head;
-            }
-            else
-            {
-                ship = DestroyShip(ship);
-            }
-        }
-        if (ship)
-            ship = ship->next;
-    }
-    return head;
-}
-*/
 
 void MoveShip(void *data)
 {
@@ -143,7 +143,7 @@ Ship* CreateShip(Uint8 x, Uint8 y, Facing facing)
         fprintf(stderr, "Failure allocating ship.\n");
         return NULL;
     }
-    *ship = (Ship){x, y, facing, (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}};
+    *ship = (Ship){x, y, facing, DEFAULT, 0, (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}};
     // No need to check non NULL
     return ship;
 }

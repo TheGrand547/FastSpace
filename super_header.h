@@ -6,7 +6,10 @@
 
 typedef enum
 {
-    UP, RIGHT, DOWN, LEFT
+    UP = 0,
+    RIGHT = 1,
+    DOWN = 2,
+    LEFT = 3
 } Facing;
 
 typedef SDL_Color Color;
