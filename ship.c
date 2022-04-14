@@ -1,14 +1,21 @@
 #include "ship.h"
+
 #include <stdio.h>
 #include "draw.h"
+#include "player.h"
+#include "ship_types.h"
 
 static ActionFunc ActionMap[] = {NoneShip, CircleShip};
+static ShipFreeFunc FreeMap[] = {FreeShip, FreeCircleShip, FreePlayerShip};
 
 void ActivateShip(void *data)
 {
     if (!data)
         return;
     Ship *ship = (Ship*) data;
+    // This could be converted to a array with the index being the cases hmmm
+    // values would be function pointers, unsure if the call stack cost would
+    // be advantageous but idk
     switch (ActionMap[ship->type](ship))
     {
         case SHOOT:
@@ -28,24 +35,11 @@ void ActivateShip(void *data)
     }
 }
 
-Action NoneShip(Ship *ship)
+void CleanupShip(void *data)
 {
-    return NONE;
-}
-
-Action CircleShip(Ship *ship)
-{
-    Action value = TURNRIGHT;
-    if (ship->counter)
-    {
-        ship->counter--;
-    }
-    else
-    {
-        ship->counter = 1;
-        value = SHOOT;
-    }
-    return value;
+    Ship *ship = (Ship*) data;
+    if (data)
+        FreeMap[ship->type](ship);
 }
 
 int FacingX(Facing facing)
@@ -134,7 +128,7 @@ SDL_Point ShipNextTile(Ship *ship)
     return next;
 }
 
-Ship* CreateShip(Uint8 x, Uint8 y, Facing facing)
+Ship *CreateGenericShip(Uint8 x, Uint8 y, Facing facing)
 {
     Ship *ship = (Ship*) calloc(1, sizeof(Ship));
     SDL_Log("%p Created\n", (void*) ship);
@@ -143,7 +137,8 @@ Ship* CreateShip(Uint8 x, Uint8 y, Facing facing)
         fprintf(stderr, "Failure allocating ship.\n");
         return NULL;
     }
-    *ship = (Ship){x, y, facing, DEFAULT, 0, (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}};
+    *ship = (Ship){x, y, facing, DEFAULT, 0,
+                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL};
     // No need to check non NULL
     return ship;
 }

@@ -10,14 +10,14 @@ typedef int(*ArrayCriteria)(void*);
 Array* ArrayCreate(unsigned int size);
 Array* ArrayCreate(unsigned int size);
 void ArrayClear(Array *array, ArrayFunc clean);
+void ArrayAnnihilate(Array **array, ArrayFunc clean);
+#define ArrayPurge(array) ArrayAnnihilate(array, free)
 
 #define ArrayNew() ArrayCreate(1)
 #define ArrayClean(array) ArrayClear(array, free)
 
 unsigned int ArrayLength(Array *array);
 unsigned int ArraySize(Array *array);
-
-void ArrayPurge(Array **array);
 void ArrayAdd(Array *array, unsigned int index, void *data);
 void ArrayInsert(Array *array, unsigned int index, void *data);
 void ArrayAppend(Array *array, void *data);

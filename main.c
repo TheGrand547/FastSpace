@@ -2,14 +2,16 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
+#include "array.h"
 #include "bullet.h"
 #include "button.h"
 #include "constants.h"
 #include "draw.h"
-#include "ship.h"
-#include "super_header.h"
-#include "array.h"
 #include "flags.h"
+#include "player.h"
+#include "ship.h"
+#include "ship_types.h"
+#include "super_header.h"
 
 #define WIDTH 10
 #define HEIGHT 10
@@ -23,6 +25,12 @@ static SDL_Renderer *renderer;
 static SDL_Window *window;
 static Field field = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
 
+// TODO: THIS IS HORRIFIC PLEASE FIX IT WHEN YOU GET TO MENUS AND STUFF
+static struct
+{
+    const Uint16 turnDelay;
+} userSettings = {50}; // 250 is what it was before, that felt a tad slow
+
 typedef enum {PLAYER, AI} Turn;
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
@@ -33,11 +41,12 @@ SDL_atomic_t frames;
 /* Calculate and display the average framerate over the set interval */
 Uint32 fps_timer_callback(Uint32 interval, void *data)
 {
+    UNUSED(data);
     const float f = SDL_AtomicGet(&frames);
     const float iv = interval * 0.001f;
 
     /* Note: the thread safety of printf is ambiguous across platforms */
-    printf("%.2f\tfps w/0x%p data\n", f / iv, data);
+    printf("%.2f\tfps\n", f / iv);
 
     /* Reset frame counter */
     SDL_AtomicSet(&frames, 0);
@@ -64,25 +73,17 @@ int main(int argc, char **argv)
     Uint32 time;
 #endif // LIMITED_FPS
     Array* ships = ArrayNew();
-    Ship *player = CreateShip(0, 0, RIGHT);
+    Ship *player = CreateGenericShip(0, 0, RIGHT);
     player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
 
-
-    // I don't know why these are here
-    printf("%zu\n", sizeof(Ship));
-    printf("%p\n", (void*)player);
-    printf("%p\n", (**(void***) ships));
-
     printf("player\n");
-    ArrayAppend(ships, CreateShip(1, 3, LEFT));
-    ArrayAppend(ships, CreateShip(4, 3, RIGHT));
-    for (unsigned int i = 0; i < ArrayLength(ships); i++)
-        ((Ship*)ArrayElement(ships, i))->type = CIRCLE;
+    ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
+    ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
 
     // This is bad
-    Bullet *zoop = CreateShip(9, 5, RIGHT);
+    Bullet *zoop = CreateGenericShip(9, 5, RIGHT);
     ColorShip((Ship*) zoop, SDL_MapRGB(GetPixelFormat(), 0xFF, 0xFF, 0x00));
 
     ColorShip(player, SDL_MapRGB(GetPixelFormat(), 0xFF, 0x00, 0x00));
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
         Uint8 switchTurn : 1; // 6 unused
         Uint8 windowSize : 1;
     } flags;
+    flags.windowSize = 1;
 
     SDL_AddTimer(2000, fps_timer_callback, NULL);
     while (loop)
@@ -177,7 +179,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            if (SDL_GetTicks() - turnTimer > 250)
+            if (SDL_GetTicks() - turnTimer > userSettings.turnDelay)
             {
                 if (turnIndex < ArrayLength(ships))
                 {
@@ -209,7 +211,7 @@ int main(int argc, char **argv)
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    ArrayPurge(&ships);
+    ArrayAnnihilate(&ships, CleanupShip);
     return 0;
 }
 

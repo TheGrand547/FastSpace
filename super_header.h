@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include "field.h"
 
+#define UNUSED(x) (void)(x)
+
 typedef enum
 {
     UP = 0,

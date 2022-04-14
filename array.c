@@ -42,11 +42,11 @@ void ArrayDestroy(Array *array)
     }
 }
 
-void ArrayPurge(Array **array)
+void ArrayAnnihilate(Array **array, ArrayFunc clean)
 {
     if (array && *array)
     {
-        ArrayIterate(*array, free);
+        ArrayIterate(*array, clean);
         ArrayDestroy(*array);
         *array = NULL;
     }
