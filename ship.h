@@ -26,10 +26,6 @@ typedef struct __ship
 /** Function typedefs **/
 typedef void (*ShipFunc)(Ship *ship);
 
-/** Static Data Map Functions **/
-void ActivateShip(void *data);
-void CleanupShip(void *data);
-
 /** Standard Functions **/
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);

@@ -18,7 +18,11 @@ typedef enum
 } ShipTypes;
 
 typedef Action (*ActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
-typedef void (*ShipFreeFunc)(void *ship);
+typedef void (*ShipFreeFunc)(Ship *ship);
+
+/** Static Data Map Functions **/
+Action ActivateShip(void *data);
+void CleanupShip(void *data);
 
 /** None Ship **/
 Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing);

@@ -5,43 +5,6 @@
 #include "player.h"
 #include "ship_types.h"
 
-static ActionFunc ActionMap[] = {NoneShip, CircleShip};
-static ShipFreeFunc FreeMap[] = {FreeShip, FreeCircleShip, FreePlayerShip};
-
-void ActivateShip(void *data)
-{
-    if (!data)
-        return;
-    Ship *ship = (Ship*) data;
-    // This could be converted to a array with the index being the cases hmmm
-    // values would be function pointers, unsure if the call stack cost would
-    // be advantageous but idk
-    switch (ActionMap[ship->type](ship))
-    {
-        case SHOOT:
-        {
-            SDL_Point s = ShipNextTile(ship);
-            printf("ZOOPING %i %i\n", s.x, s.y);
-            break;
-        }
-        case TURNLEFT:
-            TurnLeft(ship);
-            break;
-        case TURNRIGHT:
-            TurnRight(ship);
-            break;
-        default:
-            break;
-    }
-}
-
-void CleanupShip(void *data)
-{
-    Ship *ship = (Ship*) data;
-    if (data)
-        FreeMap[ship->type](ship);
-}
-
 int FacingX(Facing facing)
 {
     int value = 0;

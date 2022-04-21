@@ -29,9 +29,9 @@ static Field field = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
 static struct
 {
     const Uint16 turnDelay;
-} userSettings = {50}; // 250 is what it was before, that felt a tad slow
+} userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
-typedef enum {PLAYER, AI} Turn;
+typedef enum {PLAYER, AI, MISC} Turn;
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 
@@ -97,6 +97,7 @@ int main(int argc, char **argv)
     {
         Uint8 switchTurn : 1; // 6 unused
         Uint8 windowSize : 1;
+        Uint8 bufferState : 1;
     } flags;
     flags.windowSize = 1;
 
@@ -147,6 +148,7 @@ int main(int argc, char **argv)
                 }
             }
         }
+        // Flag handling
         if (flags.windowSize)
         {
             if (!field.spacing)
@@ -158,28 +160,25 @@ int main(int argc, char **argv)
         }
         if (flags.switchTurn)
         {
-            flags.switchTurn = 0;
-            MoveShip(player);
             // TODO: get the players choice thingy
+            MoveShip(player);
             turn = AI;
             turnTimer = SDL_GetTicks();
+            flags.bufferState = 1;
+            flags.switchTurn = 0;
             turnIndex = 0;
         }
-        // TODO: This should be placed elsewhere
-        if (turn == PLAYER)
+        if (flags.bufferState)
         {
-            for (unsigned int i = 0; i < ArrayLength(ships); i++)
-            {
-                if ((s = (Ship*) ArrayElement(ships, i)))
-                {
-                    SDL_Point point = ShipNextTile(s);
-                    OutlineTile(point.x, point.y);
-                }
-            }
+            flags.bufferState = (SDL_GetTicks() - turnTimer) < userSettings.turnDelay;
+            if (!flags.bufferState)
+                turnTimer = SDL_GetTicks();
         }
-        else
+
+        // AI turn handling
+        if (turn == AI)
         {
-            if (SDL_GetTicks() - turnTimer > userSettings.turnDelay)
+            if (!flags.bufferState && SDL_GetTicks() - turnTimer > userSettings.turnDelay)
             {
                 if (turnIndex < ArrayLength(ships))
                 {
@@ -192,7 +191,21 @@ int main(int argc, char **argv)
                 }
                 else
                 {
+                    flags.bufferState = 1;
                     turn = PLAYER;
+                }
+            }
+        }
+
+        // Drawing
+        if (turn == PLAYER)
+        {
+            for (unsigned int i = 0; i < ArrayLength(ships); i++)
+            {
+                if ((s = (Ship*) ArrayElement(ships, i)))
+                {
+                    SDL_Point point = ShipNextTile(s);
+                    OutlineTile(point.x, point.y);
                 }
             }
         }
@@ -201,6 +214,8 @@ int main(int argc, char **argv)
         ArrayIterate(ships, DrawShip);
         DrawBullet(zoop);
         DrawButton(button);
+
+        // End of frame stuff
         SDL_RenderPresent(renderer);
         SDL_AtomicAdd(&frames, 1);
 #ifdef LIMITED_FPS
