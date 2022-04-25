@@ -18,7 +18,6 @@ void ArrayAnnihilate(Array **array, ArrayFunc clean);
 
 unsigned int ArrayLength(Array *array);
 unsigned int ArraySize(Array *array);
-void ArrayAdd(Array *array, unsigned int index, void *data);
 void ArrayInsert(Array *array, unsigned int index, void *data);
 void ArrayAppend(Array *array, void *data);
 void ArrayDeleteRange(Array *array, unsigned int start, unsigned int end);

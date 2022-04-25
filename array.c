@@ -52,13 +52,27 @@ void ArrayAnnihilate(Array **array, ArrayFunc clean)
     }
 }
 
-void ArrayAdd(Array *array, unsigned int index, void *data)
+void ArrayInsert(Array *array, unsigned int index, void *data)
+{
+    if (!array)
+        return;
+    if (index >= ArraySize(array))
+        ArrayAppend(array, data);
+    else
+    {
+        memmove(array->array + index + 1, array->array + index, (array->length - index) * sizeof(void*));
+        array->array[index] = data;
+        array->length++;
+    }
+}
+
+static void ArrayAdd(Array *array, unsigned int index, void *data)
 {
     if (!array || !data)
         return;
     if (array->size <= index)
     {
-        // Resize array
+        // Resize array; averages out to be constant time for rapid reallocations
         array->size *= 2;
         array->array = realloc(array->array, array->size * sizeof(void*));
     }
