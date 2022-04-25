@@ -34,8 +34,6 @@ void CopyShip(Ship *ship, Ship *ships);
 void MoveShip(void *data);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
-void UpdateShips(Ship *ship);
-void DrawShip(void *data);
 
 void ColorShip(Ship *ship, Uint32 color);
 

@@ -90,18 +90,30 @@ int main(int argc, char **argv)
     SDL_Event e;
 
     Turn turn = PLAYER;
+    Action selection = NONE;
     Uint32 turnTimer = 0;
     unsigned int turnIndex = 0;
 
     struct
     {
-        Uint8 switchTurn : 1; // 6 unused
+        Uint8 switchTurn : 1; // 5 unused
         Uint8 windowSize : 1;
         Uint8 bufferState : 1;
     } flags;
     flags.windowSize = 1;
 
     SDL_AddTimer(2000, fps_timer_callback, NULL);
+    SDL_Surface *surf = SDL_LoadBMP("ship.bmp");
+    SDL_Texture *t;
+    if (surf)
+    {
+        SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
+        //SDL_SetSurfaceColorMod(surf, 0xFF, 0x00, 0x00);
+        t = SDL_CreateTextureFromSurface(renderer, surf);
+        SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
+        SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
+    }
+    LoadShipImages();
     while (loop)
     {
 #ifdef LIMITED_FPS
@@ -115,7 +127,8 @@ int main(int argc, char **argv)
             {
                 loop = 0;
             }
-            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && ButtonCheck(button, &e))
+            // TODO: Fix this, it's sloppy as fuck
+            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && selection != NONE && ButtonCheck(button, &e))
             {
                 flags.switchTurn = 1;
             }
@@ -123,14 +136,14 @@ int main(int argc, char **argv)
             {
                 switch (e.key.keysym.scancode)
                 {
-                    case SDL_SCANCODE_H:
-                        ArrayPop(ships);
-                        break;
                     case SDL_SCANCODE_Q:
                         loop = 0;
                         break;
-                    case SDL_SCANCODE_F:
-                        TurnRight(player);
+                    case SDL_SCANCODE_LEFT:
+                        selection = TURNLEFT;
+                        break;
+                    case SDL_SCANCODE_RIGHT:
+                        selection = TURNRIGHT;
                         break;
                     case SDL_SCANCODE_SPACE:
                         flags.switchTurn = (turn == PLAYER);
@@ -160,8 +173,18 @@ int main(int argc, char **argv)
         }
         if (flags.switchTurn)
         {
-            // TODO: get the players choice thingy
             MoveShip(player);
+            if (selection == TURNRIGHT)
+                TurnRight(player);
+            else if (selection == TURNLEFT)
+                TurnLeft(player);
+            /*
+            else
+                // Shoot
+            */
+            selection = NONE;
+
+            // Switch turn
             turn = AI;
             turnTimer = SDL_GetTicks();
             flags.bufferState = 1;
@@ -210,17 +233,21 @@ int main(int argc, char **argv)
             }
         }
         DrawField(&field);
-        DrawShip(player);
+        DrawBlankShip(player);
         ArrayIterate(ships, DrawShip);
         DrawBullet(zoop);
         DrawButton(button);
+
+        SDL_Rect rr = {0, 0, 200, 200};
+        if (t)
+            SDL_RenderCopy(renderer, t, NULL, &rr);
 
         // End of frame stuff
         SDL_RenderPresent(renderer);
         SDL_AtomicAdd(&frames, 1);
 #ifdef LIMITED_FPS
-        if (SDL_GetTicks() - time <= 2)
-            SDL_Delay(1);
+        if (SDL_GetTicks() - time <= 5)
+            SDL_Delay(2);
 #endif // LIMITED_FPS
     }
     SDL_DestroyRenderer(renderer);
@@ -232,7 +259,7 @@ int main(int argc, char **argv)
 
 int init()
 {
-    int result = SDL_Init(SDL_INIT_EVERYTHING);
+    int result = SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_TIMER);
     if (!result)
     {
         window = SDL_CreateWindow("Fast Space Thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

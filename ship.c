@@ -57,23 +57,6 @@ void TurnLeft(Ship *ship)
     ship->facing--;
 }
 
-void DrawShip(void *data)
-{
-    if (!data)
-        return;
-    Ship *ship = (Ship*) data;
-    Field *field = GetField();
-    SDL_Rect rect = {field->basePointX + ship->x *
-                    (field->rectWidth + field->spacing),
-                    field->basePointX + ship->y *
-                    (field->rectHeight + field->spacing),
-                    field->rectWidth, field->rectHeight};
-    SDL_SetRenderDrawColor(GetRenderer(), ship->color.r,
-                           ship->color.g, ship->color.b, ship->color.a);
-    SDL_RenderFillRect(GetRenderer(), &rect);
-    DrawArrow(ship->x, ship->y, ship->facing);
-}
-
 void ColorShip(Ship *ship, Uint32 color)
 {
     if (ship)

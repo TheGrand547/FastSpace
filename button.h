@@ -4,13 +4,14 @@
 #include <SDL2/SDL.h>
 #include "super_header.h"
 
-typedef void(*ButtonFunc)();
+typedef void (*ButtonFunc)();
 
 typedef struct
 {
     SDL_Rect rect;
     SDL_Texture *texture;
     ButtonFunc func;
+    void *data;
 } Button;
 
 void VoidButton();
