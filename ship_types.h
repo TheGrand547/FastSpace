@@ -18,8 +18,9 @@ typedef enum
 } ShipType;
 
 void LoadShipImages();
+void FreeShipImages();
 
-typedef Action (*ActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
+typedef Action (*ShipActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
 typedef void (*ShipFreeFunc)(Ship *ship);
 typedef void (*ShipDrawFunc)(Ship *ship);
 
@@ -38,5 +39,7 @@ void DrawBlankShip(Ship *ship);
 Ship *CreateCircleShip(Uint8 x, Uint8 y, Facing facing);
 Action CircleShip(Ship *ship);
 #define FreeCircleShip FreeShip
+
+SDL_Texture *Gamer();
 
 #endif // SHIP_TYPES_H

@@ -16,10 +16,22 @@ static SDL_Rect GetDrawArea(Ship *ship)
 
 void DrawShipType(Ship *ship);
 
-static ActionFunc ActionMap[] = {NoneShip, CircleShip, NoneShip};
+// TODO: Make this an array of struct
+struct ShipData
+{
+    ShipActionFunc action;
+    ShipFreeFunc free;
+    ShipDrawFunc draw;
+    const char *filename;
+    SDL_Texture *texture;
+};
+
+static struct ShipData ShipsData[] = {{NULL, NULL, NULL, NULL, NULL}};
+
+static ShipActionFunc ActionMap[] = {NoneShip, CircleShip, NoneShip};
 static ShipFreeFunc FreeMap[] = {FreeShip, FreeCircleShip, FreePlayerShip};
-static ShipDrawFunc DrawMap[] = {DrawBlankShip, DrawShipType, DrawBlankShip};
-static SDL_Texture *ShipTextures[1];
+static ShipDrawFunc DrawMap[] = {DrawBlankShip, DrawShipType, DrawShipType};
+static SDL_Texture *ShipTextures[2]; // TODO: Should be a macro for this size
 
 Action ActivateShip(void *data)
 {
@@ -149,7 +161,60 @@ void LoadShipImages()
         ShipTextures[0] = SDL_CreateTextureFromSurface(GetRenderer(), surf);
         SDL_SetTextureBlendMode(ShipTextures[0], SDL_BLENDMODE_BLEND);
     }
+    SDL_FreeSurface(surf);
 }
+
+void FreeShipImages()
+{
+    for (unsigned int i = 0; i < (sizeof(ShipTextures) / sizeof(SDL_Texture*)); i++)
+    {
+        if (ShipTextures[i])
+            SDL_DestroyTexture(ShipTextures[i]);
+    }
+}
+
+void *GimmePixelsFromGreyscale(Uint8 *pointer, int width, int height)
+{
+    Uint32 *array = calloc(width * height, sizeof(Uint32));
+    if (array)
+        for (int i = 0; i < width * height; i++)
+        {
+            Uint32 current = pointer[i];
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+            array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
+#else // Little endian
+            array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
+#endif
+        }
+    return (void*) array;
+}
+
+SDL_Texture *Gamer()
+{
+    Uint8 array[10 * 10] = {
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                    0xFF, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0x00, 0x00, 0x80, 0x80, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0x00, 0x80, 0x00, 0x00, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0xFF, 0xFF, 0x8F, 0x8F, 0x8F, 0xFF, 0x00, 0xFF,
+                    0xFF, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0xFF,
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+                    };
+    void *pointer = GimmePixelsFromGreyscale(array, 10, 10);
+    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer,
+                                              10, 10, 32, 4*10, 0x000000FF, 0x0000FF00,
+                                              0x00FF0000, 0xFF000000);
+    SDL_Texture *t = SDL_CreateTextureFromSurface(GetRenderer(), s);
+    SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
+    SDL_FreeSurface(s);
+    free(pointer);
+    return t;
+}
+
+
 
 
 

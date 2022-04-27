@@ -69,11 +69,11 @@ int main(int argc, char **argv)
         printf("SDL failed to initialize: %s\n", SDL_GetError());
         return -1;
     }
-#ifdef LIMITED_FPS
+#ifndef UNLIMITED_FPS
     Uint32 time;
-#endif // LIMITED_FPS
+#endif // UNLIMITED_FPS
     Array* ships = ArrayNew();
-    Ship *player = CreateGenericShip(0, 0, RIGHT);
+    Ship *player = CreatePlayer();
     player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
@@ -103,22 +103,13 @@ int main(int argc, char **argv)
     flags.windowSize = 1;
 
     SDL_AddTimer(2000, fps_timer_callback, NULL);
-    SDL_Surface *surf = SDL_LoadBMP("ship.bmp");
-    SDL_Texture *t;
-    if (surf)
-    {
-        SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
-        //SDL_SetSurfaceColorMod(surf, 0xFF, 0x00, 0x00);
-        t = SDL_CreateTextureFromSurface(renderer, surf);
-        SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
-        SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
-    }
-    LoadShipImages();
+    LoadShipImages(); // HACKY
+    SDL_Texture *t = Gamer();
     while (loop)
     {
-#ifdef LIMITED_FPS
+#ifndef UNLIMITED_FPS
         time = SDL_GetTicks();
-#endif // LIMITED_FPS
+#endif // UNLIMITED_FPS
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
         while (SDL_PollEvent(&e))
@@ -239,17 +230,17 @@ int main(int argc, char **argv)
         DrawButton(button);
 
         SDL_Rect rr = {0, 0, 200, 200};
-        if (t)
-            SDL_RenderCopy(renderer, t, NULL, &rr);
+        SDL_RenderCopy(renderer, t, NULL, &rr);
 
         // End of frame stuff
         SDL_RenderPresent(renderer);
         SDL_AtomicAdd(&frames, 1);
-#ifdef LIMITED_FPS
-        if (SDL_GetTicks() - time <= 5)
-            SDL_Delay(2);
-#endif // LIMITED_FPS
+#ifndef UNLIMITED_FPS
+        if (SDL_GetTicks() - time <= FPS_LIMIT_THRESHOLD)
+            SDL_Delay(FPS_LIMIT_RATE);
+#endif // UNLIMITED_FPS
     }
+    FreeShipImages();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

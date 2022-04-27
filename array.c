@@ -98,7 +98,6 @@ void **ArrayReference(Array *array, unsigned int index)
 {
     if (!array)
         return NULL;
-    assert(array->length > index);
     return (void**) array->array + index;
 }
 
@@ -107,7 +106,6 @@ void *ArrayElement(Array *array, unsigned int index)
 {
     if (!array)
         return NULL;
-    assert(array->length > index);
     return (void*)array->array[index];
 }
 
