@@ -35,3 +35,19 @@ void OutlineTile(Uint8 x, Uint8 y)
     SDL_SetRenderDrawColor(renderer, 0x00, 0x80, 0x80, 0xFF);
     SDL_RenderFillRect(renderer, &rect);
 }
+
+Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height)
+{
+    Uint32 *array = calloc(width * height, sizeof(Uint32));
+    if (array)
+        for (int i = 0; i < width * height; i++)
+        {
+            Uint32 current = pointer[i];
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+            array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
+#else // Little endian
+            array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
+#endif
+        }
+    return array;
+}

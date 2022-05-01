@@ -1,6 +1,7 @@
 #include "ship_types.h"
 #include <stdio.h>
 #include "draw.h"
+#include "misc.h"
 #include "player.h"
 
 static SDL_Rect GetDrawArea(Ship *ship)
@@ -94,7 +95,7 @@ Action NoneShip(Ship *ship)
 
 void FreeShip(Ship *ship)
 {
-    // If any information <- What does this mean
+    // This should only be done if the data pointer of ship is null, otherwise memory will leak
     free(ship);
 }
 
@@ -115,6 +116,7 @@ Ship *CreateCircleShip(Uint8 x, Uint8 y, Facing facing)
     {
         ship->type = CIRCLE;
         ship->data = NULL;
+        ColorShip(ship, SDL_MapRGB(GetPixelFormat(), 0xFF, 0x00, 0x00));
     }
     return ship;
 }
@@ -148,6 +150,7 @@ void DrawShipType(Ship *ship)
         angle = 90;
     if (facing == DOWN)
         angle = 270;
+    SDL_SetTextureColorMod(texture, ship->color.r, ship->color.g, ship->color.b);
     SDL_RenderCopyEx(GetRenderer(), texture, NULL, &rect, angle, NULL, flip);
 }
 
@@ -157,6 +160,7 @@ void LoadShipImages()
     SDL_Surface *surf = SDL_LoadBMP("ship.bmp");
     if (surf)
     {
+        OutputImage(surf);
         SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
         ShipTextures[0] = SDL_CreateTextureFromSurface(GetRenderer(), surf);
         SDL_SetTextureBlendMode(ShipTextures[0], SDL_BLENDMODE_BLEND);
@@ -173,22 +177,6 @@ void FreeShipImages()
     }
 }
 
-void *GimmePixelsFromGreyscale(Uint8 *pointer, int width, int height)
-{
-    Uint32 *array = calloc(width * height, sizeof(Uint32));
-    if (array)
-        for (int i = 0; i < width * height; i++)
-        {
-            Uint32 current = pointer[i];
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
-#else // Little endian
-            array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
-#endif
-        }
-    return (void*) array;
-}
-
 SDL_Texture *Gamer()
 {
     Uint8 array[10 * 10] = {
@@ -203,7 +191,7 @@ SDL_Texture *Gamer()
                     0xFF, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0xFF,
                     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
                     };
-    void *pointer = GimmePixelsFromGreyscale(array, 10, 10);
+    void *pointer = (void*) Uint8PixelsToUint32Pixels(array, 10, 10);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer,
                                               10, 10, 32, 4*10, 0x000000FF, 0x0000FF00,
                                               0x00FF0000, 0xFF000000);

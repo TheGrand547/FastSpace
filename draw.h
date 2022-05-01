@@ -5,5 +5,6 @@
 
 void DrawArrow(Uint8 x, Uint8 y, Uint8 facing);
 void OutlineTile(Uint8 x, Uint8 y);
+Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height);
 
 #endif // DRAW_H

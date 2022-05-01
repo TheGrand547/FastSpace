@@ -35,24 +35,12 @@ typedef enum {PLAYER, AI, MISC} Turn;
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 
-SDL_atomic_t frames;
 
-/* From https://wiki.libsdl.org/SDL_atomic_t */
-/* Calculate and display the average framerate over the set interval */
-Uint32 fps_timer_callback(Uint32 interval, void *data)
-{
-    UNUSED(data);
-    const float f = SDL_AtomicGet(&frames);
-    const float iv = interval * 0.001f;
+static SDL_atomic_t frames;
 
-    /* Note: the thread safety of printf is ambiguous across platforms */
-    printf("%.2f\tfps\n", f / iv);
-
-    /* Reset frame counter */
-    SDL_AtomicSet(&frames, 0);
-
-    return interval;
-}
+#ifndef RELEASE
+Uint32 fps_timer_callback(Uint32 interval, void *data);
+#endif // RELEASE
 
 int init();
 
@@ -102,9 +90,17 @@ int main(int argc, char **argv)
     } flags;
     flags.windowSize = 1;
 
+    #ifndef RELEASE
     SDL_AddTimer(2000, fps_timer_callback, NULL);
+    #endif // RELEASE
+
     LoadShipImages(); // HACKY
     SDL_Texture *t = Gamer();
+
+    SDL_Vertex lists[4] = {{{50, 40}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
+                            {{120, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
+                            {{50, 150}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
+                            {{200, 150}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
     while (loop)
     {
 #ifndef UNLIMITED_FPS
@@ -229,8 +225,10 @@ int main(int argc, char **argv)
         DrawBullet(zoop);
         DrawButton(button);
 
-        SDL_Rect rr = {0, 0, 200, 200};
+        SDL_Rect rr = {300, 0, 200, 200};
+        int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(renderer, t, NULL, &rr);
+        SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
 
         // End of frame stuff
         SDL_RenderPresent(renderer);
@@ -294,3 +292,22 @@ unsigned int WindowSizeY()
 {
     return field.height * (field.rectHeight + field.spacing) - field.spacing;
 }
+
+#ifndef RELEASE
+/* From https://wiki.libsdl.org/SDL_atomic_t */
+/* Calculate and display the average framerate over the set interval */
+Uint32 fps_timer_callback(Uint32 interval, void *data)
+{
+    UNUSED(data);
+    const float f = SDL_AtomicGet(&frames);
+    const float iv = interval * 0.001f;
+
+    /* Note: the thread safety of printf is ambiguous across platforms */
+    printf("%.2f\tfps\n", f / iv);
+
+    /* Reset frame counter */
+    SDL_AtomicSet(&frames, 0);
+
+    return interval;
+}
+#endif // RELEASE
