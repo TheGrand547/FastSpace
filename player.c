@@ -1,5 +1,5 @@
 #include "player.h"
-#include "ship_types.h"
+#include <stdio.h>
 
 Ship *CreatePlayer()
 {
@@ -15,4 +15,11 @@ Ship *CreatePlayer()
 void FreePlayerShip(Ship *ship)
 {
     free(ship);
+}
+
+Action PlayerShip(Ship *ship)
+{
+    // TODO: Log this
+    printf("ActivateShip called on player\n");
+    return NONE;
 }

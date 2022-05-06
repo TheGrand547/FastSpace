@@ -4,6 +4,10 @@
 #include "misc.h"
 #include "player.h"
 
+#define NULL_CHECK(x) if (!x) return;
+
+// TODO: Make logger with freopen() on stderr
+
 static SDL_Rect GetDrawArea(Ship *ship)
 {
     Field field = *(GetField());
@@ -17,22 +21,21 @@ static SDL_Rect GetDrawArea(Ship *ship)
 
 void DrawShipType(Ship *ship);
 
-// TODO: Make this an array of struct
+// TOOD: Add creation functions, and such
 struct ShipData
 {
-    ShipActionFunc action;
-    ShipFreeFunc free;
-    ShipDrawFunc draw;
-    const char *filename;
+    const ShipActionFunc action;
+    const ShipFreeFunc free;
+    const ShipDrawFunc draw;
+    const char *filename; // TODO: Replace this with the appropriate function call when you do the greyscale thing
     SDL_Texture *texture;
 };
 
-static struct ShipData ShipsData[] = {{NULL, NULL, NULL, NULL, NULL}};
-
-static ShipActionFunc ActionMap[] = {NoneShip, CircleShip, NoneShip};
-static ShipFreeFunc FreeMap[] = {FreeShip, FreeCircleShip, FreePlayerShip};
-static ShipDrawFunc DrawMap[] = {DrawBlankShip, DrawShipType, DrawShipType};
-static SDL_Texture *ShipTextures[2]; // TODO: Should be a macro for this size
+static struct ShipData ShipsData[] = {
+    {NoneShip,   FreeShip,       DrawBlankShip, NULL,       NULL}, // None ship
+    {CircleShip, FreeCircleShip, DrawShipType,  "ship.bmp", NULL}, // Circle ship
+    {PlayerShip, FreePlayerShip, DrawShipType,  NULL,       NULL}  // Player ship
+};
 
 Action ActivateShip(void *data)
 {
@@ -42,7 +45,7 @@ Action ActivateShip(void *data)
     // This could be converted to a array with the index being the cases hmmm
     // values would be function pointers, unsure if the call stack cost would
     // be advantageous but idk
-    Action action = ActionMap[ship->type](ship);
+    Action action = ShipsData[ship->type].action(ship);
     switch (action)
     {
         case SHOOT:
@@ -64,20 +67,20 @@ Action ActivateShip(void *data)
     return action;
 }
 
-// I would make a macro for these but even i'm not that tacky
-// Definitely didn't forget how to create a macro like that
 void CleanupShip(void *data)
 {
+    NULL_CHECK(data);
     Ship *ship = (Ship*) data;
     if (ship)
-        FreeMap[ship->type](ship);
+        ShipsData[ship->type].free(ship);
 }
 
 void DrawShip(void *data)
 {
+    NULL_CHECK(data);
     Ship *ship = (Ship*) data;
     if (ship)
-        DrawMap[ship->type](ship);
+        ShipsData[ship->type].draw(ship);
 }
 
 /** Generic ship **/
@@ -95,7 +98,9 @@ Action NoneShip(Ship *ship)
 
 void FreeShip(Ship *ship)
 {
-    // This should only be done if the data pointer of ship is null, otherwise memory will leak
+    NULL_CHECK(ship);
+    if (ship->data)
+        fprintf(stderr, "Non-null pointer %p leaked\n", ship->data); // TODO: Logger
     free(ship);
 }
 
@@ -139,8 +144,12 @@ Action CircleShip(Ship *ship)
 void DrawShipType(Ship *ship)
 {
     SDL_Rect rect = GetDrawArea(ship);
-    // TODO: GET BACK TO THIS WHEN THERE IS MORE THAN ONE TYPE
-    SDL_Texture *texture = ShipTextures[ship->type - 1]; // VERY VERY VERY BAD, YOU SUCK
+    SDL_Texture *texture = ShipsData[ship->type].texture;
+    if (!texture)
+    {
+        DrawBlankShip(ship);
+        return;
+    }
     SDL_RendererFlip flip = SDL_FLIP_NONE;
     Facing facing = ship->facing;
     double angle = 0;
@@ -156,41 +165,56 @@ void DrawShipType(Ship *ship)
 
 void LoadShipImages()
 {
-    // TODO: Make this not sloppy as shit
-    SDL_Surface *surf = SDL_LoadBMP("ship.bmp");
-    if (surf)
+    for (unsigned int i = 0; i < (sizeof(ShipsData) / sizeof(struct ShipData)); i++)
     {
-        OutputImage(surf);
-        SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
-        ShipTextures[0] = SDL_CreateTextureFromSurface(GetRenderer(), surf);
-        SDL_SetTextureBlendMode(ShipTextures[0], SDL_BLENDMODE_BLEND);
+        const char *name = ShipsData[i].filename;
+        if (name)
+        {
+            // TODO: Change all of this when the greyscale thing comes true
+            if (ShipsData[i].texture)
+                SDL_DestroyTexture(ShipsData[i].texture);
+            SDL_Surface *surf = SDL_LoadBMP(name);
+            if (surf)
+            {
+                SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
+                ShipsData[i].texture = SDL_CreateTextureFromSurface(GetRenderer(), surf);
+                SDL_SetTextureBlendMode(ShipsData[i].texture, SDL_BLENDMODE_BLEND);
+            }
+            else
+            {
+                // TODO: Log something about it somewhere
+            }
+            SDL_FreeSurface(surf);
+        }
     }
-    SDL_FreeSurface(surf);
 }
 
 void FreeShipImages()
 {
-    for (unsigned int i = 0; i < (sizeof(ShipTextures) / sizeof(SDL_Texture*)); i++)
+    for (unsigned int i = 0; i < (sizeof(ShipsData) / sizeof(struct ShipData)); i++)
     {
-        if (ShipTextures[i])
-            SDL_DestroyTexture(ShipTextures[i]);
+        if (ShipsData[i].texture)
+        {
+            SDL_DestroyTexture(ShipsData[i].texture);
+            ShipsData[i].texture = NULL;
+        }
     }
 }
 
 SDL_Texture *Gamer()
 {
     Uint8 array[10 * 10] = {
-                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                    0xFF, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0x00, 0x00, 0x80, 0x80, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0x00, 0x80, 0x00, 0x00, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0xFF, 0xFF, 0x8F, 0x8F, 0x8F, 0xFF, 0x00, 0xFF,
-                    0xFF, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0xFF,
-                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-                    };
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0x00, 0x00, 0x80, 0x80, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0x00, 0x80, 0x00, 0x00, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0xFF, 0xFF, 0x8F, 0x8F, 0x8F, 0xFF, 0x00, 0xFF,
+        0xFF, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    };
     void *pointer = (void*) Uint8PixelsToUint32Pixels(array, 10, 10);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer,
                                               10, 10, 32, 4*10, 0x000000FF, 0x0000FF00,

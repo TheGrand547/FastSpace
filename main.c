@@ -194,7 +194,7 @@ int main(int argc, char **argv)
                 {
                     s = ArrayElement(ships, turnIndex);
                     MoveShip(s);
-                    ActivateShip(s); // Wowie it's ai timer
+                    ActivateShip(s); // Wowie it's ai time
                     // TODO: Maybe verify they're not in the same tile as something else
                     turnIndex++;
                     turnTimer = SDL_GetTicks();
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
             }
         }
         DrawField(&field);
-        DrawBlankShip(player);
+        DrawShip(player);
         ArrayIterate(ships, DrawShip);
         DrawBullet(zoop);
         DrawButton(button);
