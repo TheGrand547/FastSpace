@@ -20,6 +20,5 @@ SDL_PixelFormat* GetPixelFormat();
 SDL_Renderer* GetRenderer();
 SDL_Window* GetWindow();
 Field* GetField();
-
 #endif // SUPER_HEADER_H
 

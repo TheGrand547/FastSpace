@@ -7,11 +7,11 @@ void DrawField(Field *field)
         return;
     SDL_SetRenderDrawColor(GetRenderer(), 0x00, 0x48, 0xCF, 0xFF);
     SDL_Rect rect = {0, 0, field->rectWidth, field->rectHeight};
-    for (int x = 0; x < field->width; x++)
+    for (unsigned int x = 0; x < field->width; x++)
     {
-        for (int y = 0; y < field->rectHeight; y++)
+        rect.x = x * (field->rectWidth + field->spacing);
+        for (unsigned int y = 0; y < field->height; y++)
         {
-            rect.x = x * (field->rectWidth + field->spacing);
             rect.y = y * (field->rectHeight + field->spacing);
             SDL_RenderFillRect(GetRenderer(), &rect);
         }

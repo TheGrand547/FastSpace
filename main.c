@@ -3,7 +3,6 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
 #include "array.h"
-#include "bullet.h"
 #include "button.h"
 #include "constants.h"
 #include "draw.h"
@@ -35,6 +34,7 @@ typedef enum {PLAYER, AI, MISC} Turn;
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 
+static Array *bullets;
 
 static SDL_atomic_t frames;
 
@@ -65,14 +65,11 @@ int main(int argc, char **argv)
     player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
+    bullets = ArrayNew();
 
     printf("player\n");
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
     ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
-
-    // This is bad
-    Bullet *zoop = CreateGenericShip(9, 5, RIGHT);
-    ColorShip((Ship*) zoop, SDL_MapRGB(GetPixelFormat(), 0xFF, 0xFF, 0x00));
 
     ColorShip(player, SDL_MapRGB(GetPixelFormat(), 0xFF, 0x00, 0x00));
     SDL_Event e;
@@ -97,10 +94,10 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
     SDL_Texture *t = Gamer();
 
-    SDL_Vertex lists[4] = {{{50, 40}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
-                            {{120, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
-                            {{50, 150}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
-                            {{200, 150}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
+    SDL_Vertex lists[4] = {{{70, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
+                            {{170, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
+                            {{50, 200}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
+                            {{200, 200}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
     while (loop)
     {
 #ifndef UNLIMITED_FPS
@@ -149,40 +146,42 @@ int main(int argc, char **argv)
             }
         }
         // Flag handling
-        if (flags.windowSize)
         {
-            if (!field.spacing)
-                field.spacing = 1;
-            flags.windowSize = 0;
-            SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
-            button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
-            button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
-        }
-        if (flags.switchTurn)
-        {
-            MoveShip(player);
-            if (selection == TURNRIGHT)
-                TurnRight(player);
-            else if (selection == TURNLEFT)
-                TurnLeft(player);
-            /*
-            else
-                // Shoot
-            */
-            selection = NONE;
+            if (flags.windowSize)
+            {
+                if (!field.spacing)
+                    field.spacing = 1;
+                flags.windowSize = 0;
+                SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
+                button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
+                button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
+            }
+            if (flags.switchTurn)
+            {
+                MoveShip(player);
+                if (selection == TURNRIGHT)
+                    TurnRight(player);
+                else if (selection == TURNLEFT)
+                    TurnLeft(player);
+                /*
+                else
+                    // Shoot
+                */
+                selection = NONE;
 
-            // Switch turn
-            turn = AI;
-            turnTimer = SDL_GetTicks();
-            flags.bufferState = 1;
-            flags.switchTurn = 0;
-            turnIndex = 0;
-        }
-        if (flags.bufferState)
-        {
-            flags.bufferState = (SDL_GetTicks() - turnTimer) < userSettings.turnDelay;
-            if (!flags.bufferState)
+                // Switch turn
+                turn = AI;
                 turnTimer = SDL_GetTicks();
+                flags.bufferState = 1;
+                flags.switchTurn = 0;
+                turnIndex = 0;
+            }
+            if (flags.bufferState)
+            {
+                flags.bufferState = (SDL_GetTicks() - turnTimer) < userSettings.turnDelay;
+                if (!flags.bufferState)
+                    turnTimer = SDL_GetTicks();
+            }
         }
 
         // AI turn handling
@@ -193,7 +192,6 @@ int main(int argc, char **argv)
                 if (turnIndex < ArrayLength(ships))
                 {
                     s = ArrayElement(ships, turnIndex);
-                    MoveShip(s);
                     ActivateShip(s); // Wowie it's ai time
                     // TODO: Maybe verify they're not in the same tile as something else
                     turnIndex++;
@@ -201,6 +199,7 @@ int main(int argc, char **argv)
                 }
                 else
                 {
+                    ArrayIterate(bullets, ActivateShip);
                     flags.bufferState = 1;
                     turn = PLAYER;
                 }
@@ -222,7 +221,7 @@ int main(int argc, char **argv)
         DrawField(&field);
         DrawShip(player);
         ArrayIterate(ships, DrawShip);
-        DrawBullet(zoop);
+        ArrayIterate(bullets, DrawShip);
         DrawButton(button);
 
         SDL_Rect rr = {300, 0, 200, 200};
@@ -243,6 +242,7 @@ int main(int argc, char **argv)
     SDL_DestroyWindow(window);
     SDL_Quit();
     ArrayAnnihilate(&ships, CleanupShip);
+    ArrayAnnihilate(&bullets, CleanupShip);
     return 0;
 }
 
@@ -291,6 +291,12 @@ unsigned int WindowSizeX()
 unsigned int WindowSizeY()
 {
     return field.height * (field.rectHeight + field.spacing) - field.spacing;
+}
+
+void ShootGamer(Ship *ship)
+{
+    SDL_Point point = ShipNextTile(ship);
+    ArrayAppend(bullets, CreateGenericShip(point.x, point.y, ship->facing));
 }
 
 #ifndef RELEASE

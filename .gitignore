@@ -55,3 +55,4 @@ FastSpace.cbp
 FastSpace.depend
 bin/*
 *.bak
+*.cscope_file_list

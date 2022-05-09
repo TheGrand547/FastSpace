@@ -8,17 +8,7 @@
 
 // TODO: Make logger with freopen() on stderr
 
-static SDL_Rect GetDrawArea(Ship *ship)
-{
-    Field field = *(GetField());
-    SDL_Rect rect = {field.basePointX + ship->x *
-                    (field.rectWidth + field.spacing),
-                     field.basePointX + ship->y *
-                    (field.rectHeight + field.spacing),
-                     field.rectWidth, field.rectHeight};
-    return rect;
-}
-
+static SDL_Rect GetDrawArea(Ship *ship);
 void DrawShipType(Ship *ship);
 
 // TOOD: Add creation functions, and such
@@ -32,27 +22,25 @@ struct ShipData
 };
 
 static struct ShipData ShipsData[] = {
-    {NoneShip,   FreeShip,       DrawBlankShip, NULL,       NULL}, // None ship
-    {CircleShip, FreeCircleShip, DrawShipType,  "ship.bmp", NULL}, // Circle ship
-    {PlayerShip, FreePlayerShip, DrawShipType,  NULL,       NULL}  // Player ship
+    {NoneShip,      FreeShip,          DrawBlankShip, NULL,       NULL}, // None ship
+    {CircleShip,    FreeCircleShip,    DrawShipType,  "ship.bmp", NULL}, // Circle ship
+    {PlayerShip,    FreePlayerShip,    DrawShipType,  NULL,       NULL}, // Player ship
+    {GenericBullet, FreeGenericBullet, DrawBullet,    NULL,       NULL}  // Generic Bullet
 };
 
-Action ActivateShip(void *data)
+#define NUM_SHIP_TYPES (sizeof(ShipsData) / sizeof(struct ShipData))
+
+void ActivateShip(void *data)
 {
-    if (!data)
-        return NONE;
+    NULL_CHECK(data);
     Ship *ship = (Ship*) data;
-    // This could be converted to a array with the index being the cases hmmm
-    // values would be function pointers, unsure if the call stack cost would
-    // be advantageous but idk
+    MoveShip(ship);
     Action action = ShipsData[ship->type].action(ship);
     switch (action)
     {
         case SHOOT:
         {
-            SDL_Point s = ShipNextTile(ship);
-            printf("ZOOPING %i %i\n", s.x, s.y);
-            // TODO: Shoot thingy here
+            ShootGamer(ship); // TODO: fix this hack thingy
             break;
         }
         case TURNLEFT:
@@ -64,13 +52,13 @@ Action ActivateShip(void *data)
         default:
             break;
     }
-    return action;
 }
 
 void CleanupShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
+    SDL_Log("%p Destroyed\n", (void*) ship);
     if (ship)
         ShipsData[ship->type].free(ship);
 }
@@ -91,8 +79,8 @@ Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing)
 
 Action NoneShip(Ship *ship)
 {
-    UNUSED(ship);
-    SDL_Log("NoneShip %p was activated\n", (void*) ship);
+    if (ship->type == NONE)
+        SDL_Log("NoneShip %p was activated\n", (void*) ship);
     return NONE;
 }
 
@@ -165,7 +153,7 @@ void DrawShipType(Ship *ship)
 
 void LoadShipImages()
 {
-    for (unsigned int i = 0; i < (sizeof(ShipsData) / sizeof(struct ShipData)); i++)
+    for (unsigned int i = 0; i < NUM_SHIP_TYPES; i++)
     {
         const char *name = ShipsData[i].filename;
         if (name)
@@ -191,7 +179,7 @@ void LoadShipImages()
 
 void FreeShipImages()
 {
-    for (unsigned int i = 0; i < (sizeof(ShipsData) / sizeof(struct ShipData)); i++)
+    for (unsigned int i = 0; i < NUM_SHIP_TYPES; i++)
     {
         if (ShipsData[i].texture)
         {
@@ -199,6 +187,17 @@ void FreeShipImages()
             ShipsData[i].texture = NULL;
         }
     }
+}
+
+static SDL_Rect GetDrawArea(Ship *ship)
+{
+    Field field = *(GetField());
+    SDL_Rect rect = {field.basePointX + ship->x *
+                    (field.rectWidth + field.spacing),
+                     field.basePointX + ship->y *
+                    (field.rectHeight + field.spacing),
+                     field.rectWidth, field.rectHeight};
+    return rect;
 }
 
 SDL_Texture *Gamer()
@@ -225,9 +224,5 @@ SDL_Texture *Gamer()
     free(pointer);
     return t;
 }
-
-
-
-
 
 

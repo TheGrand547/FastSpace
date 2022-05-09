@@ -8,17 +8,18 @@ void DrawArrow(Uint8 x, Uint8 y, Uint8 facing)
     SDL_Renderer *renderer = GetRenderer();
     Uint8 w = copy.rectWidth * 1.0 / 2.0;
     Uint8 h = copy.rectHeight * 1.0 / 2.0;
-    SDL_Point center = {copy.basePointX + (x * (copy.rectWidth + copy.spacing) + w),
+    SDL_FPoint center = {copy.basePointX + (x * (copy.rectWidth + copy.spacing) + w),
                         copy.basePointX + (y * (copy.rectHeight + copy.spacing) + h)};
-    SDL_Point points[3] = {center, center, center};
-    points[0].x += FacingX(facing - 1) * w;
-    points[0].y += FacingY(facing - 1) * h;
-    points[1].x += FacingX(facing) * w;
-    points[1].y += FacingY(facing) * h;
-    points[2].x += FacingX(facing + 1) * w;
-    points[2].y += FacingY(facing + 1) * h;
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x7F, 0xFF, 0xFF);
-    SDL_RenderDrawLines(renderer, points, 3);
+    Color color = {0x00, 0x7F, 0xFF, 0xFF};
+    SDL_Vertex points[3] = {{center, color, {0, 0}}, {center, color, {0, 0}}, {center, color, {0, 0}}};
+    points[0].position.x += FacingX(facing - 1) * w;
+    points[0].position.y += FacingY(facing - 1) * h;
+    points[1].position.x += FacingX(facing) * w;
+    points[1].position.y += FacingY(facing) * h;
+    points[1].color.b = 0x00;
+    points[2].position.x += FacingX(facing + 1) * w;
+    points[2].position.y += FacingY(facing + 1) * h;
+    SDL_RenderGeometry(renderer, NULL, points, 3, NULL, 0);
 }
 
 void OutlineTile(Uint8 x, Uint8 y)
