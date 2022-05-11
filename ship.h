@@ -23,9 +23,6 @@ typedef struct __ship
     void *data; // 8 bytes
 } Ship;
 
-/** Function typedefs **/
-typedef void (*ShipFunc)(Ship *ship);
-
 /** Standard Functions **/
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);

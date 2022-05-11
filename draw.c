@@ -2,6 +2,8 @@
 #include "super_header.h"
 #include "ship.h"
 
+#define FACTOR (1.0 / 2.0)
+
 void DrawArrow(Uint8 x, Uint8 y, Uint8 facing)
 {
     Field copy = *GetField();
@@ -12,13 +14,13 @@ void DrawArrow(Uint8 x, Uint8 y, Uint8 facing)
                         copy.basePointX + (y * (copy.rectHeight + copy.spacing) + h)};
     Color color = {0x00, 0x7F, 0xFF, 0xFF};
     SDL_Vertex points[3] = {{center, color, {0, 0}}, {center, color, {0, 0}}, {center, color, {0, 0}}};
-    points[0].position.x += FacingX(facing - 1) * w;
-    points[0].position.y += FacingY(facing - 1) * h;
+    points[0].position.x += FacingX(facing - 1) * w * FACTOR;
+    points[0].position.y += FacingY(facing - 1) * h * FACTOR;
     points[1].position.x += FacingX(facing) * w;
     points[1].position.y += FacingY(facing) * h;
     points[1].color.b = 0x00;
-    points[2].position.x += FacingX(facing + 1) * w;
-    points[2].position.y += FacingY(facing + 1) * h;
+    points[2].position.x += FacingX(facing + 1) * w * FACTOR;
+    points[2].position.y += FacingY(facing + 1) * h * FACTOR;
     SDL_RenderGeometry(renderer, NULL, points, 3, NULL, 0);
 }
 
@@ -48,7 +50,7 @@ Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height)
             array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
 #else // Little endian
             array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
-#endif
+#endif // SDL_BYTEORDER == SDL_BIG_ENDIAN
         }
     return array;
 }

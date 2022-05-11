@@ -22,5 +22,5 @@ Action PlayerShip(Ship *ship)
     UNUSED(ship);
     // TODO: Log this
     printf("ActivateShip called on player\n");
-    return NONE;
+    return NO_ACTION;
 }

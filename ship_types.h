@@ -5,32 +5,37 @@
 
 typedef enum
 {
-    TURNLEFT, TURNRIGHT, NONE, SHOOT
+    TURNLEFT, TURNRIGHT, NO_ACTION, SHOOT
     // Arbitrarily many others
 } Action;
 
 typedef enum
 {
-    DEFAULT = 0,
-    CIRCLE = 1,
-    USER = 2,
-    BULLET = 3
-    // Up to 16 so it fits in Uint8 : 4
+    NONE_SHIP, CIRCLE, USER, BULLET, LAST_SHIP // Up to 16 so it fits in Uint8 : 4
 } ShipType;
 
+//** External Setup/Cleanup Methods **//
 void LoadShipImages();
 void FreeShipImages();
 
+// TODO: Rename ship action functions
 typedef Ship *(*ShipCreateFunc)(Uint8 x, Uint8 y, Facing facing);
 typedef Action (*ShipActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
 typedef void (*ShipFreeFunc)(Ship *ship);
 typedef void (*ShipDrawFunc)(Ship *ship);
+typedef void (*ShipFunc)(Ship *ship);
 
-/** Static Data Map Functions **/
+
+/** Generic Activation Functions **/
 void ActivateShip(void *data);
 void CleanupShip(void *data);
 void DrawShip(void *data);
+
+// Internal way of drawing a specific ship with a defined SDL_Texture in the map
+// TODO: Determine if this should be static
 void DrawShipType(Ship *ship);
+
+//** Ship Function Map Declarations **//
 
 /** None Ship **/
 Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing);
@@ -45,10 +50,10 @@ Action CircleShip(Ship *ship);
 #define DrawCircleShip DrawShipType
 
 /** Generic Bullet **/
-Ship *CreateGenericBullet(Uint8, Uint8 y, Facing facing);
-#define GenericBullet NoneShip
-#define FreeGenericBullet FreeShip
-#define DrawBullet DrawShipType
+Ship *CreateBullet(Uint8, Uint8 y, Facing facing);
+Action GenericBullet(Ship *ship);
+#define FreeBullet FreeShip
+void DrawBullet(Ship *ship);
 
 // TODO: GET RID OF THESE USELESS THINGS
 SDL_Texture *Gamer();

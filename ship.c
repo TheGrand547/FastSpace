@@ -60,7 +60,7 @@ void TurnLeft(Ship *ship)
 void ColorShip(Ship *ship, Uint32 color)
 {
     if (ship)
-        SDL_GetRGBA(color, GetPixelFormat(), &ship->color.r,
+        SDL_GetRGBA(color, GetDisplayPixelFormat(), &ship->color.r,
                     &ship->color.g, &ship->color.b, &ship->color.a);
 }
 
@@ -83,7 +83,7 @@ Ship *CreateGenericShip(Uint8 x, Uint8 y, Facing facing)
         fprintf(stderr, "Failure allocating ship.\n");
         return NULL;
     }
-    *ship = (Ship){x, y, facing, DEFAULT, 0,
+    *ship = (Ship){x, y, facing, NONE_SHIP, 0,
                     (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL};
     // No need to check non NULL
     return ship;

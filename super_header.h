@@ -16,7 +16,7 @@ typedef enum
 
 typedef SDL_Color Color;
 
-SDL_PixelFormat* GetPixelFormat();
+SDL_PixelFormat* GetDisplayPixelFormat();
 SDL_Renderer* GetRenderer();
 SDL_Window* GetWindow();
 Field* GetField();

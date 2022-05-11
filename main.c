@@ -71,11 +71,11 @@ int main(int argc, char **argv)
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
     ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
 
-    ColorShip(player, SDL_MapRGB(GetPixelFormat(), 0xFF, 0x00, 0x00));
+    ColorShip(player, SDL_MapRGB(GetDisplayPixelFormat(), 0xFF, 0x00, 0x00));
     SDL_Event e;
 
     Turn turn = PLAYER;
-    Action selection = NONE;
+    Action selection = NO_ACTION;
     Uint32 turnTimer = 0;
     unsigned int turnIndex = 0;
 
@@ -87,9 +87,9 @@ int main(int argc, char **argv)
     } flags;
     flags.windowSize = 1;
 
-    #ifndef RELEASE
+#ifndef RELEASE
     SDL_AddTimer(2000, fps_timer_callback, NULL);
-    #endif // RELEASE
+#endif // RELEASE
 
     LoadShipImages(); // HACKY
     SDL_Texture *t = Gamer();
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
                 loop = 0;
             }
             // TODO: Fix this, it's sloppy as fuck
-            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && selection != NONE && ButtonCheck(button, &e))
+            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && selection != NO_ACTION && ButtonCheck(button, &e))
             {
                 flags.switchTurn = 1;
             }
@@ -123,6 +123,14 @@ int main(int argc, char **argv)
                     case SDL_SCANCODE_Q:
                         loop = 0;
                         break;
+                    case SDL_SCANCODE_G:
+                        {
+                        Ship *bullet = CreateGenericShip(1, 6, RIGHT);
+                        bullet->type = BULLET;
+                        ColorShip(bullet, SDL_MapRGB(GetDisplayPixelFormat(), 0x00, 0x80, 0xFF));
+                        ArrayAppend(bullets, bullet);
+                        break;
+                        }
                     case SDL_SCANCODE_LEFT:
                         selection = TURNLEFT;
                         break;
@@ -167,7 +175,7 @@ int main(int argc, char **argv)
                 else
                     // Shoot
                 */
-                selection = NONE;
+                selection = NO_ACTION;
 
                 // Switch turn
                 turn = AI;
@@ -200,6 +208,40 @@ int main(int argc, char **argv)
                 else
                 {
                     ArrayIterate(bullets, ActivateShip);
+                    for (unsigned int i = 0; i < ArrayLength(bullets); i++)
+                    {
+                        s = (Ship*) ArrayElement(bullets, i);
+                        int collision = 0;
+                        if (!s)
+                            break;
+                        if (s->x > field.width || s->y > field.height)
+                        {
+                            printf("%p is out of bounds\n", (void*) s);
+                            CleanupShip(*ArrayRemove(bullets, i));
+                            i--;
+                            continue;
+                        }
+                        for (unsigned int j = i + 1; j < ArrayLength(bullets); j++)
+                        {
+                            Ship *s2 = (Ship*) ArrayElement(bullets, j);
+                            if (s != s2)
+                            {
+                                SDL_Point p = {s->x, s->y};
+                                SDL_Point p2 = {s2->x, s2->y};
+                                if (p.x == p2.x && p.y == p2.y)
+                                {
+                                    collision = 1;
+                                    CleanupShip(*ArrayRemove(bullets, j));
+                                    j--;
+                                }
+                            }
+                        }
+                        if (collision)
+                        {
+                            CleanupShip(*ArrayRemove(bullets, i));
+                            i--;
+                        }
+                    }
                     flags.bufferState = 1;
                     turn = PLAYER;
                 }
@@ -263,7 +305,7 @@ int init()
     return result;
 }
 
-SDL_PixelFormat* GetPixelFormat()
+SDL_PixelFormat* GetDisplayPixelFormat()
 {
     return SDL_GetWindowSurface(window)->format;
 }
@@ -295,8 +337,10 @@ unsigned int WindowSizeY()
 
 void ShootGamer(Ship *ship)
 {
-    SDL_Point point = ShipNextTile(ship);
-    ArrayAppend(bullets, CreateGenericShip(point.x, point.y, ship->facing));
+    Ship *bullet = CreateGenericShip(ship->x, ship->y, ship->facing);
+    bullet->type = BULLET;
+    ColorShip(bullet, SDL_MapRGB(GetDisplayPixelFormat(), 0x00, 0x80, 0xFF));
+    ArrayAppend(bullets, bullet);
 }
 
 #ifndef RELEASE
