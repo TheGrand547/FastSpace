@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 
 // External helper function
-Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height);
+Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height);
 int FontInit();
 int FontQuit();
 
