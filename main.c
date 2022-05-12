@@ -95,7 +95,8 @@ int main(int argc, char **argv)
 
     LoadShipImages(); // HACKY
     //SDL_Texture *t = Gamer();
-    SDL_Texture *t = CharTexture('A', renderer);
+    //SDL_Texture *t = CharTexture('A', renderer);
+    SDL_Texture *t = GimmeTexture(renderer, "A", 10);
     //SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
@@ -272,8 +273,8 @@ int main(int argc, char **argv)
 
         SDL_Rect rr = {0, 0, 150, 250};
         int rs[] = {0, 1, 2, 2, 1, 3};
-        //SDL_RenderCopy(renderer, t, NULL, &rr);
-        SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
+        SDL_RenderCopy(renderer, t, NULL, &rr);
+        //SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
 
         // End of frame stuff
         SDL_RenderPresent(renderer);

@@ -12,8 +12,8 @@ SDL_Point GetTextSize(char *string, size_t scale);
 SDL_Point GetCharSize(size_t scale);
 #define GetConstTextSize(string, scale) GetCharSize(scale) * (sizeof(string) / sizeof(char))
 
-SDL_Texture *CharTexture(char ch, SDL_Renderer *renderer);
+SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch);
 // TODO: Rename
-SDL_Texture *GimmeTexture(char *string, size_t size, SDL_Color color);
+SDL_Texture *GimmeTexture(SDL_Renderer *renderer, char *string, size_t size);
 
 #endif // GRAND_FONT_H

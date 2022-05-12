@@ -1,4 +1,5 @@
 #include "font.h"
+#include <string.h>
 
 // TODO: Move this helper elsewhere
 Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height)
@@ -243,7 +244,7 @@ static int LoadCharacter(int index)
 }
 
 // I don't like this
-SDL_Texture *CharTexture(char ch, SDL_Renderer *renderer)
+SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch)
 {
     if ((ch > GRAND_CHAR_MAX) | (ch < GRAND_CHAR_MIN))
         return NULL;
@@ -257,8 +258,45 @@ SDL_Texture *CharTexture(char ch, SDL_Renderer *renderer)
     return CharTextures[index];
 }
 
-SDL_Texture *GimmeTexture(char *string, size_t size, SDL_Color color)
+SDL_Texture *GimmeTexture(SDL_Renderer *renderer, char *string, size_t size)
 {
-    return NULL;
+    const int width = size * CHAR_W;
+    const int height = size * CHAR_H;
+    const int len = strlen(string);
+    // Uncomment when it works lol
+    /*
+    if (len == 1)
+        return CharTexture(renderer, *string);*/
+    SDL_Texture *old = SDL_GetRenderTarget(renderer);
+    SDL_Texture *result = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
+                                            SDL_TEXTUREACCESS_TARGET,
+                                            len * width * 1.5, len * height * 1.5);
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(renderer, &info);
+    if (result)
+    {
+        SDL_Rect dimension = {0, 0, width, height};
+        SDL_Texture *t;
+        printf("%i<-\n", SDL_SetRenderTarget(renderer, result));
+        SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0xFF, 0xFF);
+        SDL_RenderClear(renderer);
+        SDL_RenderDrawRect(renderer, NULL);
+        for (; *string; string++)
+        {
+            t = CharTexture(renderer, *string);
+            printf("%c\n", *string);
+            printf("%p\n", (void*)t);
+            if (t)
+            {
+                //SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
+                printf("%i ->%s<-\n", SDL_RenderCopy(renderer, t, NULL, &dimension), SDL_GetError());
+            }
+            dimension.x += width * 1.5;
+        }
+        printf("->%i\n", SDL_RenderDrawLine(renderer, 0, 0, 9, 15));
+        SDL_SetRenderTarget(renderer, old);
+    }
+    printf("DONE: %p\n", (void*) result);
+    return result;
 }
 
