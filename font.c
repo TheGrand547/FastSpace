@@ -1,5 +1,6 @@
 #include "font.h"
 #include <string.h>
+#include <limits.h>
 
 // TODO: Move this helper elsewhere
 Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height)
@@ -16,6 +17,20 @@ Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height)
             array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
 #endif // SDL_BYTEORDER == SDL_BIG_ENDIAN
         }
+    return array;
+}
+
+// Returns a 3 * 5 array with elements i
+Uint8 *LetsMakeAnArray(const Uint16 based)
+{
+    Uint8 *array = calloc(15, sizeof(Uint8));
+    if (array)
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            array[i] = (based >> (15 - i) & 1) ? 0xFF : 0x00;
+        }
+    }
     return array;
 }
 
@@ -54,6 +69,17 @@ static int LoadCharacter();
 /* 0 is good, nothing bad happened */
 int FontInit()
 {
+    //Uint8 *army = LetsMakeAnArray(0b1111010101000111);
+    Uint8 *army = LetsMakeAnArray(0b1100010100011100);
+    for (int y = 0; y < CHAR_H; y++)
+    {
+        for (int x = 0; x < CHAR_W; x++)
+        {
+            printf("%01X", army[x + y * CHAR_W] & 0xF);
+        }
+        printf("\n");
+    }
+
     int result = 0;
     result |= !(SDL_WasInit(0) & SDL_INIT_VIDEO);
     if (!result)
@@ -140,9 +166,9 @@ static const Uint8 RawChars[CHAR_COUNT - NUM_DUPLICATES][CHAR_SIZE] = {
      0xFF, 0xFF, 0x00,
      0xFF, 0x00, 0xFF}, // )
 
-    {0xFF, 0x00, 0xFF,
-     0x00, 0x00, 0x00,
+    {0x00, 0xFF, 0x00,
      0xFF, 0x00, 0xFF,
+     0x00, 0xFF, 0x00,
      0xFF, 0xFF, 0xFF,
      0xFF, 0xFF, 0xFF}, // *
 
@@ -548,10 +574,11 @@ SDL_Point GetSizeFromLength(size_t len, size_t scale)
         return (SDL_Point) {0, 0};
     if (len == 1)
         return size;
+    printf("%i\n", len);
     return (SDL_Point) {size.x * len * CHAR_SPACING - (CHAR_SPACING - 1) * size.x, size.y};
 }
 
-SDL_Point GetTextSize(char *string, size_t scale)
+SDL_Point GetTextSize(const char *string, size_t scale)
 {
     return GetSizeFromLength(strlen(string), scale);
 }
@@ -586,7 +613,7 @@ SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch)
     return CharTextures[index];
 }
 
-SDL_Texture *GimmeTexture(SDL_Renderer *renderer, char *string, size_t size)
+SDL_Texture *GimmeTexture(SDL_Renderer *renderer, const char *string, size_t size)
 {
     const int width  = size * sizeConst;
     const int height = size;
