@@ -96,8 +96,11 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
     //SDL_Texture *t = Gamer();
     //SDL_Texture *t = CharTexture('A', renderer);
-    SDL_Texture *t = GimmeTexture(renderer, "A", 10);
-    //SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
+    const char *message = "the quick brown fox jumps over the lazy dog";
+    SDL_Texture *t = GimmeTexture(renderer, message, 20);
+    SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
+    SDL_Point sizer = GetTextSize(message, 20);
+    printf("%i %i\n", sizer.x, sizer.y);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
                             {{200, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
@@ -271,7 +274,7 @@ int main(int argc, char **argv)
         ArrayIterate(bullets, DrawShip);
         DrawButton(button);
 
-        SDL_Rect rr = {0, 0, 150, 250};
+        SDL_Rect rr = {0, 0, sizer.x, sizer.y};
         int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(renderer, t, NULL, &rr);
         //SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);

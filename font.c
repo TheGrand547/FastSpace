@@ -21,10 +21,26 @@ Uint32 *Uint8PixelsToUint32Pixels(Uint8 *pointer, int width, int height)
 #define CHAR_W 3
 #define CHAR_H 5
 #define CHAR_SIZE CHAR_W * CHAR_H
-#define GRAND_CHAR_MIN 65 // A
-#define GRAND_CHAR_MAX 90 // Z
+#define GRAND_CHAR_MIN 'A' // A
+#define GRAND_CHAR_MAX 'z' // Z
 #define CHAR_COUNT GRAND_CHAR_MAX - GRAND_CHAR_MIN + 1
+#define CHAR_SPACING 1.25
 
+#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) | (x < GRAND_CHAR_MIN)
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define R_MASK 0xFF000000
+#define G_MASK 0x00FF0000
+#define B_MASK 0x0000FF00
+#define A_MASK 0x000000FF
+#else // Little endian
+#define R_MASK 0x000000FF
+#define G_MASK 0x0000FF00
+#define B_MASK 0x00FF0000
+#define A_MASK 0xFF000000
+#endif // SDL_BYTEORDER
+
+static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
 static void *CharDataPointers[CHAR_COUNT];
 static SDL_Surface *CharSurfs[CHAR_COUNT];
 static SDL_Texture *CharTextures[CHAR_COUNT];
@@ -77,7 +93,7 @@ static Uint8 RawChars[CHAR_COUNT][CHAR_SIZE] = {
      0x00, 0xFF, 0xFF,
      0x00, 0xFF, 0xFF,
      0x00, 0xFF, 0xFF,
-     0x00, 0xFF, 0x00}, // C
+     0x00, 0x00, 0x00}, // C
 
     {0x00, 0x00, 0xFF,
      0x00, 0xFF, 0x00,
@@ -228,27 +244,69 @@ static int LoadCharacters()
 
 static int LoadCharacter(int index)
 {
-    void *pointer = (void*) Uint8PixelsToUint32Pixels(RawChars[index], CHAR_W, CHAR_H);
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    Uint32 *pointer = Uint8PixelsToUint32Pixels(RawChars[index], CHAR_W, CHAR_H);
+    // TODO: This is a fix for something stupid that I did
+    for (int i = 0; i < CHAR_H; i++)
+    {
+        for (int j = 0; j < CHAR_W; j++)
+        {
+            pointer[i * CHAR_W + j] ^= 0xFFFFFFFF;
+            pointer[i * CHAR_W + j] |= A_MASK;
+        }
+    }
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
-                                              0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
-#else
-    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
-                                              0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-#endif // SDL_BYTEORDER
-    SDL_SetColorKey(s, SDL_TRUE, 0xFFFFFFFF);
+                                              R_MASK, G_MASK, B_MASK, A_MASK);
+    SDL_SetColorKey(s, SDL_TRUE, 0x00000000);
     CharDataPointers[index] = pointer;
     CharSurfs[index] = s;
     CharTextures[index] = NULL;
     return s == NULL;
 }
 
-// I don't like this
+static char FontTransformChar(char ch)
+{
+    if (ch >= 'a' && ch <= 'z')
+        return FontTransformChar(ch - 32);
+    return ch - GRAND_CHAR_MIN;
+}
+
+SDL_Point GetSizeFromLength(size_t len, size_t scale)
+{
+    SDL_Point size = GetCharSize(scale);
+    printf("size: %i %i\n", size.x, size.y);
+    if (len == 0)
+        return (SDL_Point) {0, 0};
+    if (len == 1)
+        return size;
+    return (SDL_Point) {size.x * len * CHAR_SPACING - (CHAR_SPACING - 1) * size.x, size.y};
+}
+
+SDL_Point GetTextSize(char *string, size_t scale)
+{
+    return GetSizeFromLength(strlen(string), scale);
+}
+
+SDL_Point GetCharSize(size_t scale)
+{
+    return (SDL_Point) {scale * sizeConst, scale};
+}
+
+SDL_Surface *CharSurface(char ch)
+{
+    if (CHAR_BOUNDS_CHECK(ch))
+        return NULL;
+    size_t index = FontTransformChar(ch);
+    if (!CharSurfs[index])
+        LoadCharacter(ch);
+    return CharSurfs[index];
+}
+
+// TODO: Fix this, it seems sloppy but I don't know why
 SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch)
 {
-    if ((ch > GRAND_CHAR_MAX) | (ch < GRAND_CHAR_MIN))
+    if (CHAR_BOUNDS_CHECK(ch))
         return NULL;
-    size_t index = ch - GRAND_CHAR_MIN;
+    size_t index = FontTransformChar(ch);
     if (CharTextures[index])
         return CharTextures[index];
     if (CharSurfs[index])
@@ -260,43 +318,31 @@ SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch)
 
 SDL_Texture *GimmeTexture(SDL_Renderer *renderer, char *string, size_t size)
 {
-    const int width = size * CHAR_W;
-    const int height = size * CHAR_H;
-    const int len = strlen(string);
-    // Uncomment when it works lol
-    /*
+    const int width  = size * sizeConst;
+    const int height = size;
+    const int len    = strlen(string);
+    if (len == 0)
+        return NULL;
     if (len == 1)
-        return CharTexture(renderer, *string);*/
-    SDL_Texture *old = SDL_GetRenderTarget(renderer);
-    SDL_Texture *result = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
-                                            SDL_TEXTUREACCESS_TARGET,
-                                            len * width * 1.5, len * height * 1.5);
-    SDL_RendererInfo info;
-    SDL_GetRendererInfo(renderer, &info);
-    if (result)
+        return CharTexture(renderer, *string);
+    SDL_Point realSize = GetSizeFromLength(len, size);
+    SDL_Surface *surf = SDL_CreateRGBSurface(0, realSize.x, realSize.y, 32,
+                                             R_MASK, G_MASK, B_MASK, A_MASK);
+    if (surf)
     {
         SDL_Rect dimension = {0, 0, width, height};
-        SDL_Texture *t;
-        printf("%i<-\n", SDL_SetRenderTarget(renderer, result));
-        SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0xFF, 0xFF);
-        SDL_RenderClear(renderer);
-        SDL_RenderDrawRect(renderer, NULL);
+        SDL_Surface *s;
+        SDL_SetColorKey(surf, SDL_TRUE, 0x00000000);
         for (; *string; string++)
         {
-            t = CharTexture(renderer, *string);
-            printf("%c\n", *string);
-            printf("%p\n", (void*)t);
-            if (t)
-            {
-                //SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
-                printf("%i ->%s<-\n", SDL_RenderCopy(renderer, t, NULL, &dimension), SDL_GetError());
-            }
-            dimension.x += width * 1.5;
+            s = CharSurface(*string);
+            if (s)
+                SDL_BlitScaled(s, NULL, surf, &dimension);
+            dimension.x += width * CHAR_SPACING;
         }
-        printf("->%i\n", SDL_RenderDrawLine(renderer, 0, 0, 9, 15));
-        SDL_SetRenderTarget(renderer, old);
     }
-    printf("DONE: %p\n", (void*) result);
+    SDL_Texture *result = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_FreeSurface(surf);
     return result;
 }
 
