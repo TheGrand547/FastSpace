@@ -101,7 +101,6 @@ int main(int argc, char **argv)
     SDL_Texture *t = GimmeTexture(renderer, message, 20);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
     SDL_Point sizer = GetTextSize(message, 20);
-    printf("%i %i\n", sizer.x, sizer.y);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
                             {{200, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
