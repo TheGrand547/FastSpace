@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "draw.h"
 #include "flags.h"
+#include "font.h"
 #include "player.h"
 #include "ship.h"
 #include "ship_types.h"
@@ -57,6 +58,7 @@ int main(int argc, char **argv)
         printf("SDL failed to initialize: %s\n", SDL_GetError());
         return -1;
     }
+    FontInit();
 #ifndef UNLIMITED_FPS
     Uint32 time;
 #endif // UNLIMITED_FPS
@@ -92,12 +94,14 @@ int main(int argc, char **argv)
 #endif // RELEASE
 
     LoadShipImages(); // HACKY
-    SDL_Texture *t = Gamer();
+    //SDL_Texture *t = Gamer();
+    SDL_Texture *t = CharTexture('A', renderer);
+    //SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
 
-    SDL_Vertex lists[4] = {{{70, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
-                            {{170, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
-                            {{50, 200}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
-                            {{200, 200}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
+    SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
+                            {{200, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
+                            {{50, 330}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
+                            {{200, 300}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
     while (loop)
     {
 #ifndef UNLIMITED_FPS
@@ -266,9 +270,9 @@ int main(int argc, char **argv)
         ArrayIterate(bullets, DrawShip);
         DrawButton(button);
 
-        SDL_Rect rr = {300, 0, 200, 200};
+        SDL_Rect rr = {0, 0, 150, 250};
         int rs[] = {0, 1, 2, 2, 1, 3};
-        SDL_RenderCopy(renderer, t, NULL, &rr);
+        //SDL_RenderCopy(renderer, t, NULL, &rr);
         SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
 
         // End of frame stuff
