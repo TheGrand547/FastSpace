@@ -10,7 +10,6 @@ Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height)
         for (int i = 0; i < width * height; i++)
         {
             Uint32 current = pointer[i];
-            //printf("%8X\n", current);
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
             array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
 #else // Little endian
@@ -59,7 +58,7 @@ Uint8 *LetsMakeAnArray(const Uint16 based)
 #endif // SDL_BYTEORDER
 
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
-static void *CharDataPointers[CHAR_COUNT];
+static Uint32 *CharDataPointers[CHAR_COUNT];
 static SDL_Surface *CharSurfs[CHAR_COUNT];
 static SDL_Texture *CharTextures[CHAR_COUNT];
 
@@ -70,7 +69,8 @@ static int LoadCharacter();
 int FontInit()
 {
     //Uint8 *army = LetsMakeAnArray(0b1111010101000111);
-    Uint8 *army = LetsMakeAnArray(0b1100010100011100);
+    //Uint8 *army = LetsMakeAnArray(0b1100010100011100);
+    Uint8 *army = LetsMakeAnArray((Uint16) 0);
     for (int y = 0; y < CHAR_H; y++)
     {
         for (int x = 0; x < CHAR_W; x++)
@@ -104,6 +104,80 @@ int FontQuit()
     return 0;
 }
 
+static const Uint16 RawRawRaw[CHAR_COUNT - NUM_DUPLICATES] =
+{
+    0x0000, //  <- space char
+    0x4904, // !
+    0xB400, // "
+    0x142A, // # - :( face
+    0x1470, // $ - :| face
+    0xA54A, // %
+    0x1454, // & - :) face
+    0x4800, // '
+    0x5244, // (
+    0x4494, // )
+    0xAA80, // *
+    0x0BA0, // +
+    0x0028, // ,
+    0x0380, // -
+    0x0008, // .
+    0x2548, // /
+    0xF6DE, // 0
+    0x592E, // 1
+    0x554E, // 2
+    0xC51C, // 3
+    0x2F92, // 4
+    0xF11C, // 5
+    0xF3DE, // 6
+    0xE548, // 7
+    0xF7DE, // 8
+    0xF792, // 9
+    0x0820, // :
+    0x0828, // ;
+    0x2A22, // <
+    0x1C70, // =
+    0x88A8, // >
+    0xC504, // ?
+    0xFFFF, // @ <- Need to find something for this
+    0xF7DA, // A
+    0xD75C, // B
+    0xF24E, // C
+    0xD6DC, // D
+    0xF34E, // E
+    0xF348, // F
+    0xF25E, // G
+    0xB7DA, // H
+    0xE92E, // I
+    0x24DE, // J
+    0xB75A, // K
+    0x924E, // L
+    0xFEDB, // M
+    0xBEDB, // N
+    0xF6DE, // O
+    0xFE48, // P
+    0xFC92, // Q
+    0xF75B, // R
+    0xF39E, // S
+    0xE924, // T
+    0xB6DE, // U
+    0xB6D4, // V
+    0xB6FE, // W
+    0xBD7A, // X
+    0xB7A4, // Y
+    0xE54E, // Z
+    0xD24C, // [
+    0x9112, // \ //
+    0x6496, // ]
+    0x5400, // ^
+    0x000E, // _
+    0x8800, // `
+    0x2B22, // {
+    0x4924, // |
+    0x89A8, // }
+    0x07C0  // ~
+};
+
+
 // TODO: make these Uint8's, cause 3 * 5 = 15 < 16 so we have the bits
 static const Uint8 RawChars[CHAR_COUNT - NUM_DUPLICATES][CHAR_SIZE] = {
     {0xFF, 0xFF, 0xFF,
@@ -124,17 +198,17 @@ static const Uint8 RawChars[CHAR_COUNT - NUM_DUPLICATES][CHAR_SIZE] = {
      0xFF, 0xFF, 0xFF,
      0xFF, 0xFF, 0xFF}, // "
 
-    {0xFF, 0x00, 0xFF,
-     0x00, 0x00, 0x00,
-     0xFF, 0x00, 0xFF,
-     0x00, 0x00, 0x00,
-     0xFF, 0x00, 0xFF}, // #
-
-    {0xFF, 0x00, 0xFF,
+    {0xFF, 0xFF, 0xFF,
      0x00, 0xFF, 0x00,
+     0xFF, 0xFF, 0xFF,
      0xFF, 0x00, 0xFF,
-     0xFF, 0x00, 0x00,
-     0x00, 0x00, 0xFF}, // $
+     0x00, 0xFF, 0x00}, // # <- supposed to be but is a frowny
+
+    {0xFF, 0xFF, 0xFF,
+     0x00, 0xFF, 0x00,
+     0xFF, 0xFF, 0xFF,
+     0x00, 0x00, 0x00,
+     0xFF, 0xFF, 0xFF}, // $ <- :| face
 
     {0x00, 0xFF, 0x00,
      0xFF, 0xFF, 0x00,
@@ -142,11 +216,11 @@ static const Uint8 RawChars[CHAR_COUNT - NUM_DUPLICATES][CHAR_SIZE] = {
      0x00, 0xFF, 0xFF,
      0x00, 0xFF, 0x00}, // %
 
-    {0xFF, 0x00, 0x00,
-     0x00, 0xFF, 0xFF,
-     0xFF, 0x00, 0xFF,
+    {0xFF, 0xFF, 0xFF,
      0x00, 0xFF, 0x00,
-     0x00, 0x00, 0x00}, // &
+     0xFF, 0xFF, 0xFF,
+     0x00, 0xFF, 0x00,
+     0xFF, 0x00, 0xFF}, // & <- supposed to be but it's a smiley instead
 
     {0xFF, 0x00, 0xFF,
      0xFF, 0x00, 0xFF,
@@ -330,7 +404,7 @@ static const Uint8 RawChars[CHAR_COUNT - NUM_DUPLICATES][CHAR_SIZE] = {
 
     {0x00, 0x00, 0x00,
      0x00, 0xFF, 0xFF,
-     0x00, 0x00, 0x00,
+     0x00, 0x00, 0xFF,
      0x00, 0xFF, 0xFF,
      0x00, 0x00, 0x00}, // E
 
@@ -538,9 +612,32 @@ static char FontTransformChar(char ch)
 static int LoadCharacters()
 {
     int result = 0;
+    printf("STARTING TEST\n");
     for (char i = GRAND_CHAR_MIN; i < GRAND_CHAR_MAX && !result; i++)
     {
+        int z = FontTransformChar(i);
         result |= LoadCharacter(FontTransformChar(i));
+        int flag = 0;
+        //printf("%i %i %i %hu\n", i, z, zoop[0], (Uint16)RawRawRaw[z]);
+        if (!RawRawRaw[z])
+            continue;
+        Uint8 *zoop = LetsMakeAnArray((Uint16)RawRawRaw[z]);
+        const Uint8 *pe = RawChars[z];
+        for (int y = 0; y < CHAR_H && !flag; y++)
+        {
+            for (int x = 0; x < CHAR_W; x++)
+            {
+                Uint8 a = zoop[x + y * CHAR_W];
+                Uint8 b = pe[x + y * CHAR_W] ^ 0xFF;
+                flag = a != b;
+                if (flag)
+                {
+                    printf("%c Failed: %X != %X -> %i %i\n", i, a, b, x, y);
+                    break;
+                }
+            }
+        }
+        free(zoop);
     }
     return result;
 }
