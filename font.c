@@ -2,37 +2,6 @@
 #include <string.h>
 #include <limits.h>
 
-// TODO: Move this helper elsewhere
-Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height)
-{
-    Uint32 *array = calloc(width * height, sizeof(Uint32));
-    if (array)
-        for (int i = 0; i < width * height; i++)
-        {
-            Uint32 current = pointer[i];
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
-#else // Little endian
-            array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
-#endif // SDL_BYTEORDER == SDL_BIG_ENDIAN
-        }
-    return array;
-}
-
-// Returns a 3 * 5 array with elements i
-Uint8 *LetsMakeAnArray(const Uint16 based)
-{
-    Uint8 *array = calloc(15, sizeof(Uint8));
-    if (array)
-    {
-        for (int i = 0; i < 15; i++)
-        {
-            array[i] = (based >> (15 - i) & 1) ? 0xFF : 0x00;
-        }
-    }
-    return array;
-}
-
 #define CHAR_W 3
 #define CHAR_H 5
 #define CHAR_SIZE CHAR_W * CHAR_H
@@ -41,7 +10,7 @@ Uint8 *LetsMakeAnArray(const Uint16 based)
 #define CHAR_COUNT GRAND_CHAR_MAX - GRAND_CHAR_MIN + 1
 #define CHAR_SPACING 1.25
 #define DUPLICATE_OFFSET 32 // letter as char(lower) = letter as char(upper) + 32
-#define NUM_DUPLICATES 26 // 26 letters
+#define NUM_DUPLICATES 26  // 26 letters
 
 #define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) | (x < GRAND_CHAR_MIN)
 
@@ -59,39 +28,8 @@ Uint8 *LetsMakeAnArray(const Uint16 based)
 
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
 static Uint32 *CharDataPointers[CHAR_COUNT];
-static SDL_Surface *CharSurfs[CHAR_COUNT];
+static SDL_Surface *CharSurfaces[CHAR_COUNT];
 static SDL_Texture *CharTextures[CHAR_COUNT];
-
-static int LoadCharacters();
-static int LoadCharacter();
-
-/* 0 is good, nothing bad happened */
-int FontInit()
-{
-    int result = 0;
-    result |= !(SDL_WasInit(0) & SDL_INIT_VIDEO);
-    if (!result)
-        result |= LoadCharacters();
-    return result;
-}
-
-int FontQuit()
-{
-    for (int i = 0; i < CHAR_COUNT; i++)
-    {
-        if (CharSurfs[i])
-            SDL_FreeSurface(CharSurfs[i]);
-        if (CharTextures[i])
-            SDL_DestroyTexture(CharTextures[i]);
-        if (CharDataPointers[i])
-            free(CharDataPointers[i]);
-        CharSurfs[i] = NULL;
-        CharTextures[i] = NULL;
-        CharDataPointers[i] = NULL;
-    }
-    return 0;
-}
-
 static const Uint16 RawRawRaw[CHAR_COUNT - NUM_DUPLICATES] =
 {
     0x0000, //  <- space char
@@ -165,6 +103,55 @@ static const Uint16 RawRawRaw[CHAR_COUNT - NUM_DUPLICATES] =
     0x07C0  // ~
 };
 
+static int LoadCharacter(char ch);
+static char FontTransformChar(char ch);
+static SDL_Surface *CharSurface(char ch);
+static Uint32 *Uint16ToPixelArray(const Uint16 based);
+
+static Uint32 *Uint16ToPixelArray(const Uint16 based)
+{
+    Uint32 *array = calloc(CHAR_SIZE, sizeof(Uint32));
+    if (array)
+        for (int i = 0; i < CHAR_SIZE; i++)
+        {
+            Uint32 current = ((based >> (15 - i)) & 1) ? 0xFF : 0x00;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+            array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
+#else // Little endian
+            array[i] = (0xFF << 24) + (current << 16) + (current << 8) + current;
+#endif // SDL_BYTEORDER == SDL_BIG_ENDIAN
+        }
+    return array;
+}
+
+/* 0 is good, nothing bad happened */
+int FontInit()
+{
+    int result = 0;
+    result |= !(SDL_WasInit(0) & SDL_INIT_VIDEO);
+    if (!result)
+        for (char ch = 'A'; ch <= 'Z' && !result; ch++)
+            result |= LoadCharacter(ch);
+    return result;
+}
+
+int FontQuit()
+{
+    for (int i = 0; i < CHAR_COUNT; i++)
+    {
+        if (CharSurfaces[i])
+            SDL_FreeSurface(CharSurfaces[i]);
+        if (CharTextures[i])
+            SDL_DestroyTexture(CharTextures[i]);
+        if (CharDataPointers[i])
+            free(CharDataPointers[i]);
+        CharSurfaces[i] = NULL;
+        CharTextures[i] = NULL;
+        CharDataPointers[i] = NULL;
+    }
+    return 0;
+}
+
 static char FontTransformChar(char ch)
 {
     if (ch >= GRAND_CHAR_MAX)
@@ -178,36 +165,32 @@ static char FontTransformChar(char ch)
     return ch - GRAND_CHAR_MIN;
 }
 
-// TODO: Only call LoadCharacter if it needs to be drawn to keep memory footprint low
-static int LoadCharacters()
+int FontLoadCharacters()
 {
     int result = 0;
     for (char i = GRAND_CHAR_MIN; i < GRAND_CHAR_MAX && !result; i++)
-    {
-        result |= LoadCharacter(FontTransformChar(i));
-    }
+        result |= LoadCharacter(i);
     return result;
 }
 
-static int LoadCharacter(int index)
+static int LoadCharacter(char index)
 {
-    if (CharSurfs[index])
+    index = FontTransformChar(index);
+    if (CharSurfaces[(int) index])
         return 0;
-    Uint8 *small = LetsMakeAnArray(RawRawRaw[index]);
-    Uint32 *pointer = Uint8PixelsToUint32Pixels(small, CHAR_W, CHAR_H);
+    Uint32 *pointer = Uint16ToPixelArray(RawRawRaw[(int) index]);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
                                               R_MASK, G_MASK, B_MASK, A_MASK);
     SDL_SetColorKey(s, SDL_TRUE, 0x00000000);
-    CharDataPointers[index] = pointer;
-    CharSurfs[index] = s;
-    CharTextures[index] = NULL;
-    free(small);
+    CharDataPointers[(int) index] = pointer;
+    CharSurfaces[(int) index] = s;
+    CharTextures[(int) index] = NULL;
     return s == NULL;
 }
 
-SDL_Point GetSizeFromLength(size_t len, size_t scale)
+SDL_Point FontGetSizeFromLength(size_t len, size_t scale)
 {
-    SDL_Point size = GetCharSize(scale);
+    SDL_Point size = FontGetCharSize(scale);
     if (len == 0)
         return (SDL_Point) {0, 0};
     if (len == 1)
@@ -215,42 +198,43 @@ SDL_Point GetSizeFromLength(size_t len, size_t scale)
     return (SDL_Point) {size.x * len * CHAR_SPACING - (CHAR_SPACING - 1) * size.x, size.y};
 }
 
-SDL_Point GetTextSize(const char *string, size_t scale)
+SDL_Point FontGetTextSize(const char *string, size_t scale)
 {
-    return GetSizeFromLength(strlen(string), scale);
+    return FontGetSizeFromLength(strlen(string), scale);
 }
 
-SDL_Point GetCharSize(size_t scale)
+SDL_Point FontGetCharSize(size_t scale)
 {
     return (SDL_Point) {scale * sizeConst, scale};
 }
 
-SDL_Surface *CharSurface(char ch)
+static SDL_Surface *CharSurface(char ch)
 {
     if (CHAR_BOUNDS_CHECK(ch))
         return NULL;
     size_t index = FontTransformChar(ch);
-    if (!CharSurfs[index])
+    if (!CharSurfaces[index])
         LoadCharacter(ch);
-    return CharSurfs[index];
+    return CharSurfaces[index];
 }
 
-// TODO: Fix this, it seems sloppy but I don't know why
-SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch)
+SDL_Texture *FontRenderChar(SDL_Renderer *renderer, char ch)
 {
     if (CHAR_BOUNDS_CHECK(ch))
         return NULL;
     size_t index = FontTransformChar(ch);
     if (CharTextures[index])
         return CharTextures[index];
-    if (CharSurfs[index])
-    {
-        CharTextures[index] = SDL_CreateTextureFromSurface(renderer, CharSurfs[index]);
-    }
+    CharTextures[index] = SDL_CreateTextureFromSurface(renderer, CharSurface(ch));
     return CharTextures[index];
 }
 
-SDL_Texture *GimmeTexture(SDL_Renderer *renderer, const char *string, size_t size)
+SDL_Texture *FontRenderText(SDL_Renderer *renderer, const char *string, size_t size)
+{
+    return FontRenderTextSize(renderer, string, size, NULL);
+}
+
+SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size_t size, SDL_Rect *rect)
 {
     const int width  = size * sizeConst;
     const int height = size;
@@ -258,8 +242,8 @@ SDL_Texture *GimmeTexture(SDL_Renderer *renderer, const char *string, size_t siz
     if (len == 0)
         return NULL;
     if (len == 1)
-        return CharTexture(renderer, *string);
-    SDL_Point realSize = GetSizeFromLength(len, size);
+        return FontRenderChar(renderer, *string);
+    SDL_Point realSize = FontGetSizeFromLength(len, size);
     SDL_Surface *surf = SDL_CreateRGBSurface(0, realSize.x, realSize.y, 32,
                                              R_MASK, G_MASK, B_MASK, A_MASK);
     if (surf)
@@ -277,6 +261,13 @@ SDL_Texture *GimmeTexture(SDL_Renderer *renderer, const char *string, size_t siz
     }
     SDL_Texture *result = SDL_CreateTextureFromSurface(renderer, surf);
     SDL_FreeSurface(surf);
+    if (rect)
+    {
+        rect->x = 0;
+        rect->y = 0;
+        rect->w = realSize.x;
+        rect->h = realSize.y;
+    }
     return result;
 }
 

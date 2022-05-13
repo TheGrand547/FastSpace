@@ -3,18 +3,15 @@
 #define GRAND_FONT_H
 #include <SDL2/SDL.h>
 
-// External helper function
-Uint32 *Uint8PixelsToUint32Pixels(const Uint8 *pointer, int width, int height);
-int FontInit();
+int FontInit(); // Load the alphabet characters and nothing else
 int FontQuit();
+int FontLoadCharacters(); // Force the program to load all of the characters into memory
 
-SDL_Point GetSizeFromLength(size_t length, size_t scale);
-SDL_Point GetTextSize(const char *string, size_t scale);
-SDL_Point GetCharSize(size_t scale);
+SDL_Point FontGetSizeFromLength(size_t length, size_t scale);
+SDL_Point FontGetTextSize(const char *string, size_t scale);
+SDL_Point FontGetCharSize(size_t scale);
 
-SDL_Texture *CharTexture(SDL_Renderer *renderer, char ch);
-SDL_Surface *CharSurface(char ch);
-// TODO: Rename
-SDL_Texture *GimmeTexture(SDL_Renderer *renderer, const char *string, size_t size);
-
+SDL_Texture *FontRenderChar(SDL_Renderer *renderer, char ch);
+SDL_Texture *FontRenderText(SDL_Renderer *renderer, const char *string, size_t size);
+SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size_t size, SDL_Rect *rect);
 #endif // GRAND_FONT_H
