@@ -8,7 +8,6 @@ typedef void(*ArrayFunc)(void*);
 typedef int(*ArrayCriteria)(void*);
 
 Array* ArrayCreate(unsigned int size);
-Array* ArrayCreate(unsigned int size);
 void ArrayClear(Array *array, ArrayFunc clean);
 void ArrayAnnihilate(Array **array, ArrayFunc clean);
 #define ArrayPurge(array) ArrayAnnihilate(array, free)

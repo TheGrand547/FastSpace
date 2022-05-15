@@ -12,7 +12,7 @@
 #define DUPLICATE_OFFSET 32 // letter as char(lower) = letter as char(upper) + 32
 #define NUM_DUPLICATES 26  // 26 letters
 
-#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) | (x < GRAND_CHAR_MIN)
+#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) || (x < GRAND_CHAR_MIN)
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000
@@ -26,11 +26,15 @@
 #define A_MASK 0xFF000000
 #endif // SDL_BYTEORDER
 
+// In case someone wants to make a larger(or smaller) version they just need to change
+// this line, CHAR_W, CHAR_H and the CompressedFontData array
+typedef Uint16 DataType;
+
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
 static Uint32 *CharDataPointers[CHAR_COUNT];
 static SDL_Surface *CharSurfaces[CHAR_COUNT];
 static SDL_Texture *CharTextures[CHAR_COUNT];
-static const Uint16 RawRawRaw[CHAR_COUNT - NUM_DUPLICATES] =
+static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
 {
     0x0000, //  <- space char
     0x4904, // !
@@ -103,18 +107,19 @@ static const Uint16 RawRawRaw[CHAR_COUNT - NUM_DUPLICATES] =
     0x07C0  // ~
 };
 
-static int LoadCharacter(char ch);
-static char FontTransformChar(char ch);
-static SDL_Surface *CharSurface(char ch);
-static Uint32 *Uint16ToPixelArray(const Uint16 based);
+static int LoadCharacter(unsigned char ch);
+static char FontTransformChar(unsigned char ch);
+static SDL_Surface *CharSurface(unsigned char ch);
+static Uint32 *DataToPixelArray(const DataType based);
 
-static Uint32 *Uint16ToPixelArray(const Uint16 based)
+static Uint32 *DataToPixelArray(const DataType based)
 {
+    #define DATA_BIT_COUNT (sizeof(DataType) * 8)
     Uint32 *array = calloc(CHAR_SIZE, sizeof(Uint32));
     if (array)
         for (int i = 0; i < CHAR_SIZE; i++)
         {
-            Uint32 current = ((based >> (15 - i)) & 1) ? 0xFF : 0x00;
+            Uint32 current = ((based >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
             array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
 #else // Little endian
@@ -152,7 +157,7 @@ int FontQuit()
     return 0;
 }
 
-static char FontTransformChar(char ch)
+static char FontTransformChar(unsigned char ch)
 {
     if (ch >= GRAND_CHAR_MAX)
         return 0;
@@ -173,12 +178,12 @@ int FontLoadCharacters()
     return result;
 }
 
-static int LoadCharacter(char index)
+static int LoadCharacter(unsigned char index)
 {
     index = FontTransformChar(index);
     if (CharSurfaces[(int) index])
         return 0;
-    Uint32 *pointer = Uint16ToPixelArray(RawRawRaw[(int) index]);
+    Uint32 *pointer = DataToPixelArray(CompressedFontData[(int) index]);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
                                               R_MASK, G_MASK, B_MASK, A_MASK);
     SDL_SetColorKey(s, SDL_TRUE, 0x00000000);
@@ -208,7 +213,7 @@ SDL_Point FontGetCharSize(size_t scale)
     return (SDL_Point) {scale * sizeConst, scale};
 }
 
-static SDL_Surface *CharSurface(char ch)
+static SDL_Surface *CharSurface(unsigned char ch)
 {
     if (CHAR_BOUNDS_CHECK(ch))
         return NULL;
@@ -218,7 +223,7 @@ static SDL_Surface *CharSurface(char ch)
     return CharSurfaces[index];
 }
 
-SDL_Texture *FontRenderChar(SDL_Renderer *renderer, char ch)
+SDL_Texture *FontRenderChar(SDL_Renderer *renderer, unsigned char ch)
 {
     if (CHAR_BOUNDS_CHECK(ch))
         return NULL;

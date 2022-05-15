@@ -35,34 +35,39 @@ ShipsData[PLAYER]    = {PlayerShip,    FreePlayerShip, DrawShipType,  NULL,     
 ShipsData[BULLET]    = {GenericBullet, FreeBullet,     DrawBullet,    NULL,       NULL};
 */
 
-#define NUM_SHIP_TYPES (sizeof(ShipsData) / sizeof(struct ShipData))
+#define NUM_SHIP_TYPES LAST_SHIP
 
+
+static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
+{
+    const char *name = ShipsData[index].filename;
+    if (name)
+    {
+        // TODO: Change all of this when the greyscale thing comes true
+        if (ShipsData[index].texture)
+            SDL_DestroyTexture(ShipsData[index].texture);
+        SDL_Surface *surf = SDL_LoadBMP(name);
+        if (surf)
+        {
+            SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
+            ShipsData[index].texture = SDL_CreateTextureFromSurface(renderer, surf);
+            SDL_SetTextureBlendMode(ShipsData[index].texture, SDL_BLENDMODE_BLEND);
+        }
+        else
+        {
+            // TODO: Log something about it somewhere
+        }
+        SDL_FreeSurface(surf);
+    }
+}
 
 //** External Setup/Cleanup Methods **//
+
+// Forcefully load all of the ship images
 void LoadShipImages()
 {
     for (unsigned int i = 0; i < NUM_SHIP_TYPES; i++)
-    {
-        const char *name = ShipsData[i].filename;
-        if (name)
-        {
-            // TODO: Change all of this when the greyscale thing comes true
-            if (ShipsData[i].texture)
-                SDL_DestroyTexture(ShipsData[i].texture);
-            SDL_Surface *surf = SDL_LoadBMP(name);
-            if (surf)
-            {
-                SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
-                ShipsData[i].texture = SDL_CreateTextureFromSurface(GetRenderer(), surf);
-                SDL_SetTextureBlendMode(ShipsData[i].texture, SDL_BLENDMODE_BLEND);
-            }
-            else
-            {
-                // TODO: Log something about it somewhere
-            }
-            SDL_FreeSurface(surf);
-        }
-    }
+        LoadShipimage(GetRenderer(), i);
 }
 
 void FreeShipImages()
@@ -129,7 +134,7 @@ Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing)
 
 Action NoneShip(Ship *ship)
 {
-    if (ship->type == NO_ACTION)
+    if (ship->type == NONE_SHIP)
         SDL_Log("NoneShip %p was activated\n", (void*) ship);
     return NO_ACTION;
 }
@@ -203,6 +208,8 @@ void DrawShipType(Ship *ship)
     SDL_Texture *texture = ShipsData[ship->type].texture;
     if (!texture)
     {
+        if (ShipsData[ship->type].filename)
+            LoadShipimage(GetRenderer(), ship->type);
         DrawBlankShip(ship);
         return;
     }

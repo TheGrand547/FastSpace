@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -89,8 +90,14 @@ int main(int argc, char **argv)
     } flags;
     flags.windowSize = 1;
 
+    float fps = 1;
+    float oldfps = 0;
+    char fpsText[13]; // FPS: 0000.00 -> 4 + 2 + 4 + 1 + 2 + 1 for null -> 13
+    SDL_Texture *fpsTexture;
+    SDL_Rect fpsRect;
+
 #ifndef RELEASE
-    //SDL_AddTimer(2000, fps_timer_callback, NULL);
+    SDL_AddTimer(20, fps_timer_callback, &fps);
 #endif // RELEASE
 
     LoadShipImages(); // HACKY
@@ -101,9 +108,9 @@ int main(int argc, char **argv)
     SDL_Point sizer = FontGetTextSize(message, 20);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
-                            {{200, 50}, {0x00, 0xFF, 0x00, 0xFF}, {1, 0}},
-                            {{50, 330}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
-                            {{200, 300}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
+                            {{800, 50}, {0x00, 0x00, 0xFF, 0xFF}, {1, 0}},
+                            {{50, 130}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
+                            {{800, 100}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
     while (loop)
     {
 #ifndef UNLIMITED_FPS
@@ -277,6 +284,18 @@ int main(int argc, char **argv)
         SDL_RenderCopy(renderer, t, NULL, &rr);
         SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
 
+        // TODO: CONSTANT
+        if (fabs(fps - oldfps) > 0.00001)
+        {
+            oldfps = fps;
+            sprintf(fpsText, "FPS: %4.2f", oldfps);
+            fpsTexture = FontRenderTextSize(renderer, fpsText, 15, &fpsRect);
+            SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
+            fpsRect.x = WindowSizeX() - fpsRect.w;
+            fpsRect.y = 0; // TOP RIGHT
+        }
+        SDL_RenderCopy(renderer, fpsTexture, NULL, &fpsRect);
+
         // End of frame stuff
         SDL_RenderPresent(renderer);
         SDL_AtomicAdd(&frames, 1);
@@ -286,6 +305,7 @@ int main(int argc, char **argv)
 #endif // UNLIMITED_FPS
     }
     FreeShipImages();
+    // TODO: SDL Quit
     FontQuit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -351,20 +371,15 @@ void ShootGamer(Ship *ship)
 }
 
 #ifndef RELEASE
-/* From https://wiki.libsdl.org/SDL_atomic_t */
-/* Calculate and display the average framerate over the set interval */
 Uint32 fps_timer_callback(Uint32 interval, void *data)
 {
-    UNUSED(data);
     const float f = SDL_AtomicGet(&frames);
     const float iv = interval * 0.001f;
 
-    /* Note: the thread safety of printf is ambiguous across platforms */
-    printf("%.2f\tfps\n", f / iv);
+    *(float*) data = f / iv;
 
     /* Reset frame counter */
     SDL_AtomicSet(&frames, 0);
-
     return interval;
 }
 #endif // RELEASE
