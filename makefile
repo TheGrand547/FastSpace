@@ -5,10 +5,20 @@ RM = rm -f
 # m64 = 64 bit, m32 = 32 bit
 ARCH = -m64 
 
-DEBUG = true
+# 1 = Debug, Anything else = Release
+DEBUG = 1
+
+# 0 = Dynamic linking(standard), anything else = Static linking
+STATIC = 0
+
+# Linking settings
+ifeq ($(STATIC), 0)
+LINKING = $(shell sdl2-config --libs)
+else
+LINKING = $(shell sdl2-config --static-libs)
 
 # Release flags
-ifeq (DEBUG, true) 
+ifeq ($(DEBUG), 0) 
 CPP_EXTRA = -fomit-frame-pointer -flto -O2 -DRELEASE
 LD_EXTRA = -flto -s
 else
@@ -17,10 +27,9 @@ LD_EXTRA = -pg
 endif
 
 CPPFLAGS = -g $(shell root-config --cflags) $(shell sdl2-config --cflags) -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmain -pedantic -Wfatal-errors -Wextra -Wall -std=c17 
-CPPFLAGS += ARCH 
-CPPFLAGS :=
+CPPFLAGS += $(ARCH) $(CPP_EXTRA)
 LDFLAGS = $(shell root-config --ldflags)
-LDLIBS = $(shell root-config --libs) $(shell sdl2-config --libs)
+LDLIBS += $(LINKING) $(LD_EXTRA)
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS : .c = .o)

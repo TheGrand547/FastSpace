@@ -12,7 +12,7 @@
 #define DUPLICATE_OFFSET 32 // letter as char(lower) = letter as char(upper) + 32
 #define NUM_DUPLICATES 26  // 26 letters
 
-#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) || (x < GRAND_CHAR_MIN)
+#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) | (x < GRAND_CHAR_MIN)
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000
