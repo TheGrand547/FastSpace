@@ -60,7 +60,7 @@ void TurnLeft(Ship *ship)
 void ColorShip(Ship *ship, Uint32 color)
 {
     if (ship)
-        SDL_GetRGBA(color, GetDisplayPixelFormat(), &ship->color.r,
+        SDL_GetRGBA(color, DisplayPixelFormat, &ship->color.r,
                     &ship->color.g, &ship->color.b, &ship->color.a);
 }
 

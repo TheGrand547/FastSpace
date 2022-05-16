@@ -16,9 +16,10 @@ typedef enum
 
 typedef SDL_Color Color;
 
-SDL_PixelFormat* GetDisplayPixelFormat();
-SDL_Renderer* GetRenderer();
-SDL_Window* GetWindow();
-Field* GetField();
+extern SDL_Renderer *GameRenderer;
+extern SDL_Window *GameWindow;
+extern Field GameField;
+#define DisplayPixelFormat SDL_GetWindowSurface(GameWindow)->format
+
 #endif // SUPER_HEADER_H
 

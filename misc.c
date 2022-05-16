@@ -8,7 +8,7 @@ void OutputImage(SDL_Surface *surf)
     FILE *f = fopen("img.out", "w");
     if (f)
     {
-        surf = SDL_ConvertSurface(surf, GetDisplayPixelFormat(), 0);
+        surf = SDL_ConvertSurface(surf, DisplayPixelFormat, 0);
         Uint32 *arry = (Uint32*) surf->pixels;
         for (int y = 0; y < surf->h; y++)
         {

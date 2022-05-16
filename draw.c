@@ -6,8 +6,9 @@
 
 void DrawArrow(Uint8 x, Uint8 y, Uint8 facing)
 {
-    Field copy = *GetField();
-    SDL_Renderer *renderer = GetRenderer();
+    // TODO: Determine if it would be more efficient to just replace copy with GameField instead of copy
+    Field copy = GameField;
+    SDL_Renderer *renderer = GameRenderer;
     Uint8 w = copy.rectWidth * 1.0 / 2.0;
     Uint8 h = copy.rectHeight * 1.0 / 2.0;
     SDL_FPoint center = {copy.basePointX + (x * (copy.rectWidth + copy.spacing) + w),
@@ -26,15 +27,14 @@ void DrawArrow(Uint8 x, Uint8 y, Uint8 facing)
 
 void OutlineTile(Uint8 x, Uint8 y)
 {
-    Field copy = *GetField();
-    SDL_Renderer *renderer = GetRenderer();
-    if (x >= copy.width || y >= copy.height)
+    SDL_Renderer *renderer = GameRenderer;
+    if (x >= GameField.width || y >= GameField.height)
         return;
-    Uint8 w = copy.rectWidth;
-    Uint8 h = copy.rectHeight;
-    Uint8 s = copy.spacing;
-    SDL_Rect rect = {copy.basePointX + x * (w + s) - s,
-                    copy.basePointY + y * (h + s) - s, w + 2 * s, h + 2 * s};
+    Uint8 w = GameField.rectWidth;
+    Uint8 h = GameField.rectHeight;
+    Uint8 s = GameField.spacing;
+    SDL_Rect rect = {GameField.basePointX + x * (w + s) - s,
+                     GameField.basePointY + y * (h + s) - s, w + 2 * s, h + 2 * s};
     SDL_SetRenderDrawColor(renderer, 0x00, 0x80, 0x80, 0xFF);
     SDL_RenderFillRect(renderer, &rect);
 }

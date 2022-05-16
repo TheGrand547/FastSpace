@@ -26,8 +26,8 @@ void DrawButton(Button* button)
 {
     if (!button)
         return;
-    SDL_SetRenderDrawColor(GetRenderer(), 0xFF, 0x00, 0x00, 0xFF);
-    SDL_RenderFillRect(GetRenderer(), &button->rect);
+    SDL_SetRenderDrawColor(GameRenderer, 0xFF, 0x00, 0x00, 0xFF);
+    SDL_RenderFillRect(GameRenderer, &button->rect);
 }
 
 void VoidButton() {}

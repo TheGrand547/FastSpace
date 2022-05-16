@@ -22,9 +22,9 @@
 
 #define SPACING 5
 
-static SDL_Renderer *renderer;
-static SDL_Window *window;
-static Field field = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
+SDL_Renderer *GameRenderer;
+SDL_Window *GameWindow;
+Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
 
 // TODO: THIS IS HORRIFIC PLEASE FIX IT WHEN YOU GET TO MENUS AND STUFF
 static struct
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
     ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
 
-    ColorShip(player, SDL_MapRGB(GetDisplayPixelFormat(), 0xFF, 0x00, 0x00));
+    ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     SDL_Event e;
 
     Turn turn = PLAYER;
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
     const char *message = "xyz0123456789 <>,.`~:;'\"!?@#$%^&*()-_+=[]{}|\\/";
     printf("MESSAGE: %s\n", message);
-    SDL_Texture *t = FontRenderText(renderer, message, 20);
+    SDL_Texture *t = FontRenderText(GameRenderer, message, 20);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
     SDL_Point sizer = FontGetTextSize(message, 20);
 
@@ -116,8 +116,8 @@ int main(int argc, char **argv)
 #ifndef UNLIMITED_FPS
         time = SDL_GetTicks();
 #endif // UNLIMITED_FPS
-        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
-        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x00, 0x00, 0xFF);
+        SDL_RenderClear(GameRenderer);
         while (SDL_PollEvent(&e))
         {
             if (e.type == SDL_QUIT)
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
                         {
                         Ship *bullet = CreateGenericShip(1, 6, RIGHT);
                         bullet->type = BULLET;
-                        ColorShip(bullet, SDL_MapRGB(GetDisplayPixelFormat(), 0x00, 0x80, 0xFF));
+                        ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
                         ArrayAppend(bullets, bullet);
                         break;
                         }
@@ -154,11 +154,11 @@ int main(int argc, char **argv)
                         flags.switchTurn = (turn == PLAYER);
                         break;
                     case SDL_SCANCODE_UP:
-                        field.spacing++;
+                        GameField.spacing++;
                         flags.windowSize = 1;
                         break;
                     case SDL_SCANCODE_DOWN:
-                        field.spacing--;
+                        GameField.spacing--;
                         flags.windowSize = 1;
                         break;
                     default:
@@ -170,10 +170,10 @@ int main(int argc, char **argv)
         {
             if (flags.windowSize)
             {
-                if (!field.spacing)
-                    field.spacing = 1;
+                if (!GameField.spacing)
+                    GameField.spacing = 1;
                 flags.windowSize = 0;
-                SDL_SetWindowSize(window, WindowSizeX(), WindowSizeY());
+                SDL_SetWindowSize(GameWindow, WindowSizeX(), WindowSizeY());
                 button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
                 button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
             }
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
                         int collision = 0;
                         if (!s)
                             break;
-                        if (s->x > field.width || s->y > field.height)
+                        if (s->x > GameField.width || s->y > GameField.height)
                         {
                             printf("%p is out of bounds\n", (void*) s);
                             CleanupShip(*ArrayRemove(bullets, i));
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
                 }
             }
         }
-        DrawField(&field);
+        DrawField(&GameField);
         DrawShip(player);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(bullets, DrawShip);
@@ -281,23 +281,23 @@ int main(int argc, char **argv)
 
         SDL_Rect rr = {0, 0, sizer.x, sizer.y};
         int rs[] = {0, 1, 2, 2, 1, 3};
-        SDL_RenderCopy(renderer, t, NULL, &rr);
-        SDL_RenderGeometry(renderer, t, lists, 4, rs, 6);
+        SDL_RenderCopy(GameRenderer, t, NULL, &rr);
+        SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
         // TODO: CONSTANT
         if (fabs(fps - oldfps) > 0.00001)
         {
             oldfps = fps;
             sprintf(fpsText, "FPS: %4.2f", oldfps);
-            fpsTexture = FontRenderTextSize(renderer, fpsText, 15, &fpsRect);
+            fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
             SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
             fpsRect.x = WindowSizeX() - fpsRect.w;
             fpsRect.y = 0; // TOP RIGHT
         }
-        SDL_RenderCopy(renderer, fpsTexture, NULL, &fpsRect);
+        SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
 
         // End of frame stuff
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(GameRenderer);
         SDL_AtomicAdd(&frames, 1);
 #ifndef UNLIMITED_FPS
         if (SDL_GetTicks() - time <= FPS_LIMIT_THRESHOLD)
@@ -307,8 +307,8 @@ int main(int argc, char **argv)
     FreeShipImages();
     // TODO: SDL Quit
     FontQuit();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(GameRenderer);
+    SDL_DestroyWindow(GameWindow);
     SDL_Quit();
     ArrayAnnihilate(&ships, CleanupShip);
     ArrayAnnihilate(&bullets, CleanupShip);
@@ -320,53 +320,33 @@ int init()
     int result = SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_TIMER);
     if (!result)
     {
-        window = SDL_CreateWindow("Fast Space Thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        GameWindow = SDL_CreateWindow("Fast Space Thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                   WindowSizeX(), WindowSizeY(), WINDOW_FLAGS);
-        renderer = SDL_CreateRenderer(window, -1, RENDERER_FLAGS);
-        result = !window && !renderer;
+        GameRenderer = SDL_CreateRenderer(GameWindow, -1, RENDERER_FLAGS);
+        result = !GameWindow && !GameRenderer;
         SDL_Surface *image = SDL_LoadBMP("nerd.bmp");
         if (image)
-            SDL_SetWindowIcon(window, image);
+            SDL_SetWindowIcon(GameWindow, image);
         SDL_FreeSurface(image);
     }
     return result;
 }
 
-SDL_PixelFormat* GetDisplayPixelFormat()
-{
-    return SDL_GetWindowSurface(window)->format;
-}
-
-SDL_Renderer* GetRenderer()
-{
-    return renderer;
-}
-
-SDL_Window* GetWindow()
-{
-    return window;
-}
-
-Field* GetField()
-{
-    return &field;
-}
-
 unsigned int WindowSizeX()
 {
-    return field.width * (field.rectWidth + field.spacing) - field.spacing + 200;
+    return GameField.width * (GameField.rectWidth + GameField.spacing) - GameField.spacing + 200;
 }
 
 unsigned int WindowSizeY()
 {
-    return field.height * (field.rectHeight + field.spacing) - field.spacing;
+    return GameField.height * (GameField.rectHeight + GameField.spacing) - GameField.spacing;
 }
 
 void ShootGamer(Ship *ship)
 {
     Ship *bullet = CreateGenericShip(ship->x, ship->y, ship->facing);
     bullet->type = BULLET;
-    ColorShip(bullet, SDL_MapRGB(GetDisplayPixelFormat(), 0x00, 0x80, 0xFF));
+    ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
     ArrayAppend(bullets, bullet);
 }
 

@@ -67,7 +67,7 @@ static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
 void LoadShipImages()
 {
     for (unsigned int i = 0; i < NUM_SHIP_TYPES; i++)
-        LoadShipimage(GetRenderer(), i);
+        LoadShipimage(GameRenderer, i);
 }
 
 void FreeShipImages()
@@ -150,9 +150,9 @@ void FreeShip(Ship *ship)
 void DrawBlankShip(Ship *ship)
 {
     SDL_Rect rect = GetDrawArea(ship);
-    SDL_SetRenderDrawColor(GetRenderer(), ship->color.r,
+    SDL_SetRenderDrawColor(GameRenderer, ship->color.r,
                            ship->color.g, ship->color.b, ship->color.a);
-    SDL_RenderFillRect(GetRenderer(), &rect);
+    SDL_RenderFillRect(GameRenderer, &rect);
     DrawArrow(ship->x, ship->y, ship->facing);
 }
 
@@ -164,7 +164,7 @@ Ship *CreateCircleShip(Uint8 x, Uint8 y, Facing facing)
     {
         ship->type = CIRCLE;
         ship->data = NULL;
-        ColorShip(ship, SDL_MapRGB(GetDisplayPixelFormat(), 0xFF, 0x00, 0x00));
+        ColorShip(ship, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     }
     return ship;
 }
@@ -209,7 +209,7 @@ void DrawShipType(Ship *ship)
     if (!texture)
     {
         if (ShipsData[ship->type].filename)
-            LoadShipimage(GetRenderer(), ship->type);
+            LoadShipimage(GameRenderer, ship->type);
         DrawBlankShip(ship);
         return;
     }
@@ -223,17 +223,17 @@ void DrawShipType(Ship *ship)
     if (facing == DOWN)
         angle = 270;
     SDL_SetTextureColorMod(texture, ship->color.r, ship->color.g, ship->color.b);
-    SDL_RenderCopyEx(GetRenderer(), texture, NULL, &rect, angle, NULL, flip);
+    SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
 }
 
 static SDL_Rect GetDrawArea(Ship *ship)
 {
-    Field field = *(GetField());
-    SDL_Rect rect = {field.basePointX + ship->x *
-                    (field.rectWidth + field.spacing),
-                     field.basePointX + ship->y *
-                    (field.rectHeight + field.spacing),
-                     field.rectWidth, field.rectHeight};
+    // This feels astonishingly sloopy, but i'm not sure what this is
+    SDL_Rect rect = {GameField.basePointX + ship->x *
+                    (GameField.rectWidth + GameField.spacing),
+                     GameField.basePointX + ship->y *
+                    (GameField.rectHeight + GameField.spacing),
+                     GameField.rectWidth, GameField.rectHeight};
     return rect;
 }
 
@@ -255,7 +255,7 @@ SDL_Texture *Gamer()
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer,
                                               10, 10, 32, 4*10, 0x000000FF, 0x0000FF00,
                                               0x00FF0000, 0xFF000000);
-    SDL_Texture *t = SDL_CreateTextureFromSurface(GetRenderer(), s);
+    SDL_Texture *t = SDL_CreateTextureFromSurface(GameRenderer, s);
     SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
     SDL_FreeSurface(s);
     free(pointer);

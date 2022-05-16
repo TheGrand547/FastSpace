@@ -12,5 +12,5 @@ typedef struct
 } Field;
 
 
-void DrawField(Field *field);
+void DrawField(Field *GameField);
 #endif // FIELD_H
