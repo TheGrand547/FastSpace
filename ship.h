@@ -26,8 +26,8 @@ typedef struct __ship
 /** Standard Functions **/
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);
-void CopyShip(Ship *ship, Ship *ships);
 
+// TODO: Determine if this can me made to Ship*
 void MoveShip(void *data);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
@@ -36,5 +36,4 @@ void ColorShip(Ship *ship, Uint32 color);
 
 Ship* CreateGenericShip(Uint8 x, Uint8 y, Facing facing);
 SDL_Point ShipNextTile(Ship *ship);
-
 #endif // SHIP_H

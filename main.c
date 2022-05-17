@@ -7,13 +7,15 @@
 #include "button.h"
 #include "constants.h"
 #include "draw.h"
-#include "flags.h"
 #include "font.h"
 #include "player.h"
+#include "setup.h"
 #include "ship.h"
 #include "ship_types.h"
 #include "super_header.h"
 
+
+// TODO: Find an appropriate place for these
 #define WIDTH 10
 #define HEIGHT 10
 
@@ -33,8 +35,6 @@ static struct
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
 typedef enum {PLAYER, AI, MISC} Turn;
-unsigned int WindowSizeX();
-unsigned int WindowSizeY();
 
 static Array *bullets;
 
@@ -44,8 +44,6 @@ static SDL_atomic_t frames;
 Uint32 fps_timer_callback(Uint32 interval, void *data);
 #endif // RELEASE
 
-int init();
-
 int main(int argc, char **argv)
 {
     int loop = 1;
@@ -54,12 +52,11 @@ int main(int argc, char **argv)
         printf("%s ", argv[i]);
     printf("\n");
 
-    if (init())
+    if (InitializeLibraries())
     {
         printf("SDL failed to initialize: %s\n", SDL_GetError());
         return -1;
     }
-    FontInit();
 #ifndef UNLIMITED_FPS
     Uint32 time;
 #endif // UNLIMITED_FPS
@@ -90,6 +87,7 @@ int main(int argc, char **argv)
     } flags;
     flags.windowSize = 1;
 
+    // This should probably be wrapped up somewhere nicely
     float fps = 1;
     float oldfps = 0;
     char fpsText[13]; // FPS: 0000.00 -> 4 + 2 + 4 + 1 + 2 + 1 for null -> 13
@@ -103,9 +101,9 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
     const char *message = "xyz0123456789 <>,.`~:;'\"!?@#$%^&*()-_+=[]{}|\\/";
     printf("MESSAGE: %s\n", message);
-    SDL_Texture *t = FontRenderText(GameRenderer, message, 20);
+    SDL_Rect sizer;
+    SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
-    SDL_Point sizer = FontGetTextSize(message, 20);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
                             {{800, 50}, {0x00, 0x00, 0xFF, 0xFF}, {1, 0}},
@@ -137,27 +135,29 @@ int main(int argc, char **argv)
                         loop = 0;
                         break;
                     case SDL_SCANCODE_G:
-                        {
+                    {
                         Ship *bullet = CreateGenericShip(1, 6, RIGHT);
                         bullet->type = BULLET;
                         ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
                         ArrayAppend(bullets, bullet);
                         break;
-                        }
+                    }
+                    case SDL_SCANCODE_A:
                     case SDL_SCANCODE_LEFT:
                         selection = TURNLEFT;
                         break;
+                    case SDL_SCANCODE_D:
                     case SDL_SCANCODE_RIGHT:
                         selection = TURNRIGHT;
                         break;
                     case SDL_SCANCODE_SPACE:
-                        flags.switchTurn = (turn == PLAYER);
+                        flags.switchTurn = (turn == PLAYER) && (selection != NO_ACTION);
                         break;
-                    case SDL_SCANCODE_UP:
+                    case SDL_SCANCODE_O:
                         GameField.spacing++;
                         flags.windowSize = 1;
                         break;
-                    case SDL_SCANCODE_DOWN:
+                    case SDL_SCANCODE_L:
                         GameField.spacing--;
                         flags.windowSize = 1;
                         break;
@@ -264,6 +264,7 @@ int main(int argc, char **argv)
         // Drawing
         if (turn == PLAYER)
         {
+            // Outline each ships next position
             for (unsigned int i = 0; i < ArrayLength(ships); i++)
             {
                 if ((s = (Ship*) ArrayElement(ships, i)))
@@ -279,13 +280,11 @@ int main(int argc, char **argv)
         ArrayIterate(bullets, DrawShip);
         DrawButton(button);
 
-        SDL_Rect rr = {0, 0, sizer.x, sizer.y};
         int rs[] = {0, 1, 2, 2, 1, 3};
-        SDL_RenderCopy(GameRenderer, t, NULL, &rr);
+        SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
         SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
-        // TODO: CONSTANT
-        if (fabs(fps - oldfps) > 0.00001)
+        if (FLOAT_EQUAL(fps, oldfps))
         {
             oldfps = fps;
             sprintf(fpsText, "FPS: %4.2f", oldfps);
@@ -305,42 +304,13 @@ int main(int argc, char **argv)
 #endif // UNLIMITED_FPS
     }
     FreeShipImages();
-    // TODO: SDL Quit
-    FontQuit();
-    SDL_DestroyRenderer(GameRenderer);
-    SDL_DestroyWindow(GameWindow);
-    SDL_Quit();
+    CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);
     ArrayAnnihilate(&bullets, CleanupShip);
     return 0;
 }
 
-int init()
-{
-    int result = SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_TIMER);
-    if (!result)
-    {
-        GameWindow = SDL_CreateWindow("Fast Space Thing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                  WindowSizeX(), WindowSizeY(), WINDOW_FLAGS);
-        GameRenderer = SDL_CreateRenderer(GameWindow, -1, RENDERER_FLAGS);
-        result = !GameWindow && !GameRenderer;
-        SDL_Surface *image = SDL_LoadBMP("nerd.bmp");
-        if (image)
-            SDL_SetWindowIcon(GameWindow, image);
-        SDL_FreeSurface(image);
-    }
-    return result;
-}
-
-unsigned int WindowSizeX()
-{
-    return GameField.width * (GameField.rectWidth + GameField.spacing) - GameField.spacing + 200;
-}
-
-unsigned int WindowSizeY()
-{
-    return GameField.height * (GameField.rectHeight + GameField.spacing) - GameField.spacing;
-}
+/** ANYTHING BELOW THIS LINE IS TEMPORARY AND SHOULD NOT REMAIN HERE **/
 
 void ShootGamer(Ship *ship)
 {

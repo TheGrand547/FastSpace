@@ -1,7 +1,6 @@
 #pragma once
 #ifndef FIELD_H
 #define FILED_H
-#include <SDL2/SDL.h>
 
 typedef struct
 {
@@ -11,6 +10,8 @@ typedef struct
     Uint8 spacing;
 } Field;
 
+unsigned int WindowSizeX();
+unsigned int WindowSizeY();
 
 void DrawField(Field *GameField);
 #endif // FIELD_H

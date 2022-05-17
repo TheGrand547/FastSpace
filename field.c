@@ -1,6 +1,16 @@
 #include "field.h"
 #include "super_header.h"
 
+unsigned int WindowSizeX()
+{
+    return GameField.width * (GameField.rectWidth + GameField.spacing) - GameField.spacing + 200;
+}
+
+unsigned int WindowSizeY()
+{
+    return GameField.height * (GameField.rectHeight + GameField.spacing) - GameField.spacing;
+}
+
 void DrawField(Field *field)
 {
     if (!field)
