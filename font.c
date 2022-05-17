@@ -84,8 +84,8 @@ static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
     0xFEDB, // M
     0xBEDB, // N
     0xF6DE, // O
-    0xFE48, // P
-    0xFC92, // Q
+    0xF7C8, // P
+    0xF792, // Q
     0xF75B, // R
     0xF39E, // S
     0xE924, // T
@@ -170,7 +170,7 @@ static char FontTransformChar(unsigned char ch)
     return ch - GRAND_CHAR_MIN;
 }
 
-int FontLoadCharacters()
+int FontLoadAllCharacters()
 {
     int result = 0;
     for (char i = GRAND_CHAR_MIN; i < GRAND_CHAR_MAX && !result; i++)

@@ -5,7 +5,7 @@
 
 int FontInit(); // Load the alphabet characters and nothing else
 int FontQuit(); // Free all memory allocated via the font system
-int FontLoadCharacters(); // Force the program to load all of the characters into memory
+int FontLoadAllCharacters(); // Force the program to load all of the characters into memory
 
 SDL_Point FontGetSizeFromLength(size_t length, size_t scale);
 SDL_Point FontGetTextSize(const char *string, size_t scale);

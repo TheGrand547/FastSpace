@@ -186,6 +186,14 @@ Action CircleShip(Ship *ship)
 }
 
 /** Generic Bullet **/
+Ship *CreateBullet(Uint8 x, Uint8 y, Facing facing)
+{
+    Ship *bullet = CreateGenericShip(x, y, facing);
+    if (bullet)
+        bullet->type = BULLET;
+    return bullet;
+}
+
 Action GenericBullet(Ship *ship)
 {
     if (!ship->counter)

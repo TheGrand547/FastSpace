@@ -57,6 +57,9 @@ int main(int argc, char **argv)
         printf("SDL failed to initialize: %s\n", SDL_GetError());
         return -1;
     }
+    SDL_version version;
+    SDL_VERSION(&version);
+    printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 #ifndef UNLIMITED_FPS
     Uint32 time;
 #endif // UNLIMITED_FPS
@@ -99,7 +102,7 @@ int main(int argc, char **argv)
 #endif // RELEASE
 
     LoadShipImages(); // HACKY
-    const char *message = "xyz0123456789 <>,.`~:;'\"!?@#$%^&*()-_+=[]{}|\\/";
+    const char *message = "Question";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
@@ -314,8 +317,7 @@ int main(int argc, char **argv)
 
 void ShootGamer(Ship *ship)
 {
-    Ship *bullet = CreateGenericShip(ship->x, ship->y, ship->facing);
-    bullet->type = BULLET;
+    Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);
     ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
     ArrayAppend(bullets, bullet);
 }

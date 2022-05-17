@@ -16,6 +16,7 @@ int InitializeLibraries()
         if (image)
             SDL_SetWindowIcon(GameWindow, image);
         SDL_FreeSurface(image);
+        FontInit();
     }
     return result;
 }
