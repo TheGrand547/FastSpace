@@ -1,6 +1,7 @@
 #pragma once
 #ifndef FIELD_H
 #define FILED_H
+#include <SDL2/SDL.h>
 
 typedef struct
 {

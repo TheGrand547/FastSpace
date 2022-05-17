@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 
 int FontInit(); // Load the alphabet characters and nothing else
-int FontQuit();
+int FontQuit(); // Free all memory allocated via the font system
 int FontLoadCharacters(); // Force the program to load all of the characters into memory
 
 SDL_Point FontGetSizeFromLength(size_t length, size_t scale);

@@ -5,7 +5,7 @@ RM = rm -f
 # m64 = 64 bit, m32 = 32 bit
 ARCH = -m64 
 
-# 1 = Debug, Anything else = Release
+# 0 = Release, anything else = Debug
 DEBUG = 1
 
 # 0 = Dynamic linking(standard), anything else = Static linking
@@ -16,6 +16,7 @@ ifeq ($(STATIC), 0)
 LINKING = $(shell sdl2-config --libs)
 else
 LINKING = $(shell sdl2-config --static-libs)
+endif
 
 # Release flags
 ifeq ($(DEBUG), 0) 
@@ -26,10 +27,8 @@ CPP_EXTRA = -pg -g
 LD_EXTRA = -pg
 endif
 
-CPPFLAGS = -g $(shell root-config --cflags) $(shell sdl2-config --cflags) -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmain -pedantic -Wfatal-errors -Wextra -Wall -std=c17 
-CPPFLAGS += $(ARCH) $(CPP_EXTRA)
-LDFLAGS = $(shell root-config --ldflags)
-LDLIBS += $(LINKING) $(LD_EXTRA)
+CPPFLAGS = $(shell root-config --cflags) $(shell sdl2-config --cflags) -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmain -pedantic -Wfatal-errors -Wextra -Wall -std=c17 $(ARCH) $(CPP_EXTRA)
+LDFLAGS = $(shell root-config --ldflags) $(LINKING) $(LD_EXTRA)
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS : .c = .o)
@@ -37,18 +36,18 @@ OBJS = $(SRCS : .c = .o)
 all: FastSpace
 
 FastSpace: $(OBJS)
-    $(CXX) $(LDFLAGS) -o FastSpace $(OBJS) $(LDLIBS)
+	$(CC) $(LDFLAGS) -o FastSpace $(OBJS) $(LDLIBS)
 
 depend: .depend
 
 .depend: $(SRCS)
-    $(RM) ./.depend
-    $(CXX) $(CPPFLAGS) -MM $^>>./.depend;
+	$(RM) ./.depend
+	$(CC) $(CPPFLAGS) -MM $^>>./.depend;
 
 clean:
-    $(RM) $(OBJS)
+	$(RM) $(OBJS)
 
 distclean: clean
-    $(RM) *~ .depend
+	$(RM) *~ .depend
 
 include .depend

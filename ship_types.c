@@ -14,6 +14,7 @@ static SDL_Rect GetDrawArea(Ship *ship);
 // TOOD: Add creation functions, and such
 struct ShipData
 {
+    const ShipCreateFunc create;
     const ShipActionFunc action;
     const ShipFreeFunc free;
     const ShipDrawFunc draw;
@@ -22,10 +23,10 @@ struct ShipData
 };
 
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {NoneShip,      FreeShip,       DrawBlankShip, NULL,       NULL}, // None ship
-    {CircleShip,    FreeCircleShip, DrawShipType,  "ship.bmp", NULL}, // Circle ship
-    {PlayerShip,    FreePlayerShip, DrawShipType,  NULL,       NULL}, // Player ship
-    {GenericBullet, FreeBullet,     DrawBullet,    NULL,       NULL}  // Generic Bullet
+    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NULL,       NULL}, // None ship
+    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  "ship.bmp", NULL}, // Circle ship
+    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  NULL,       NULL}, // Player ship
+    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    NULL,       NULL}  // Generic Bullet
 };
 
 /* TODO: Get this thing to work

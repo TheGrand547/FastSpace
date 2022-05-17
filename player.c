@@ -1,9 +1,9 @@
 #include "player.h"
 #include <stdio.h>
 
-Ship *CreatePlayer()
+Ship *CreatePlayer(Uint8 x, Uint8 y, Facing facing)
 {
-    Ship *ship = CreateGenericShip(0, 0, RIGHT);
+    Ship *ship = CreateGenericShip(x, y, facing);
     if (ship)
     {
         // TODO: there'll be a user struct thingy

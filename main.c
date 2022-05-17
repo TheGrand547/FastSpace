@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     Uint32 time;
 #endif // UNLIMITED_FPS
     Array* ships = ArrayNew();
-    Ship *player = CreatePlayer();
+    Ship *player = CreatePlayer(0, 0, RIGHT);
     player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);

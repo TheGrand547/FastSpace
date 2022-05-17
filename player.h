@@ -4,7 +4,7 @@
 #include "ship.h"
 #include "ship_types.h"
 
-Ship *CreatePlayer();
+Ship *CreatePlayer(Uint8 x, Uint8 y, Facing facing);
 Action PlayerShip(Ship *Ship);
 void FreePlayerShip(Ship *ship);
 
