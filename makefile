@@ -27,7 +27,11 @@ CPP_EXTRA = -pg -g
 LD_EXTRA = -pg
 endif
 
-CPPFLAGS = $(shell root-config --cflags) $(shell sdl2-config --cflags) -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmain -pedantic -Wfatal-errors -Wextra -Wall -std=c17 $(ARCH) $(CPP_EXTRA)
+WARNINGS = -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmain -pedantic -Wfatal-errors -Wextra -Wall
+
+CSTD = -std=c17
+
+CPPFLAGS = $(shell root-config --cflags) $(shell sdl2-config --cflags) $(WARNINGS) $(CSTD) $(ARCH) $(CPP_EXTRA)
 LDFLAGS = $(shell root-config --ldflags) $(LINKING) $(LD_EXTRA)
 
 SRCS = $(wildcard *.c)
