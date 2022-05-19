@@ -9,7 +9,6 @@
 #define GRAND_CHAR_MIN ' '
 #define GRAND_CHAR_MAX '~' + 1
 #define CHAR_COUNT GRAND_CHAR_MAX - GRAND_CHAR_MIN + 1
-#define CHAR_SPACING 1.25
 #define DUPLICATE_OFFSET 32 // letter as char(lower) = letter as char(upper) + 32
 #define NUM_DUPLICATES 26   // 26 letters
 
@@ -33,6 +32,9 @@ typedef Uint16 DataType;
 
 #define DATA_BIT_COUNT (sizeof(DataType) * 8)
 
+static int tabWidth = 4;
+static double charHorizontalSpacing = 1.25;
+static double charVerticalSpacing = 1.25;
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
 static Uint32 *CharDataPointers[CHAR_COUNT];
 static SDL_Surface *CharSurfaces[CHAR_COUNT];
@@ -110,6 +112,9 @@ static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
     0x07C0  // ~
 };
 
+static int ProperSpacing(int normal, int scaled);
+static int GetXDelta(size_t scale);
+static int GetYDelta(size_t scale);
 static int LoadCharacter(unsigned char ch);
 static char FontTransformChar(unsigned char ch);
 static SDL_Surface *CharSurface(unsigned char ch);
@@ -197,24 +202,73 @@ static int LoadCharacter(unsigned char index)
     return s == NULL;
 }
 
-SDL_Point FontGetSizeFromLength(size_t len, size_t scale)
+static int ProperSpacing(int normal, int scaled)
 {
-    SDL_Point size = FontGetCharSize(scale);
-    if (len == 0)
-        return (SDL_Point) {0, 0};
-    if (len == 1)
-        return size;
-    return (SDL_Point) {size.x * len * CHAR_SPACING - (CHAR_SPACING - 1) * size.x, size.y};
+    return (scaled > normal) ? scaled : normal + 1;
+}
+
+static int GetXDelta(size_t scale)
+{
+    int adjusted = scale * sizeConst;
+    return ProperSpacing(adjusted, adjusted * charHorizontalSpacing);
+}
+
+static int GetYDelta(size_t scale)
+{
+    return ProperSpacing(scale, scale * charVerticalSpacing);
+}
+
+static size_t modifiedStrlen(const char *string)
+{
+    size_t size = 0;
+    for (; *string; string++)
+    {
+        if (*string == '\t')
+            size += tabWidth;
+        else
+            size++;
+    }
+    return size;
 }
 
 SDL_Point FontGetTextSize(const char *string, size_t scale)
 {
-    return FontGetSizeFromLength(strlen(string), scale);
+    SDL_Point size = {0, 0};
+    const int length = strlen(string); // TODO: Have this include tabs as 4 chars
+    if (memchr(string, '\n', length))
+    {
+        char *buffer = calloc(length, sizeof(char));
+        memcpy(buffer, string, length);
+        char *delimited = strtok(buffer, "\n");
+        for (; delimited; delimited = strtok(NULL, "\n"))
+        {
+            size.y++;
+            // TODO: Trim trailing spaces
+            int len = strlen(delimited);
+            if (len > size.x)
+                size.x = len;
+        }
+        free(buffer);
+    }
+    else
+    {
+        size.x = length;
+        size.y = 1;
+    }
+    // Subtract the trailing spacing
+    size.x = (size.x * GetXDelta(scale) - (charHorizontalSpacing - 1));
+    size.y = (size.y * GetYDelta(scale) - (charVerticalSpacing - 1));
+    return size;
 }
 
 SDL_Point FontGetCharSize(size_t scale)
 {
     return (SDL_Point) {scale * sizeConst, scale};
+}
+
+SDL_Point FontGetCharSizeWithPadding(size_t scale)
+{
+    return (SDL_Point) {GetXDelta(scale), GetYDelta(scale)};
 }
 
 static SDL_Surface *CharSurface(unsigned char ch)
@@ -245,15 +299,28 @@ SDL_Texture *FontRenderText(SDL_Renderer *renderer, const char *string, size_t s
 
 SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size_t size, SDL_Rect *rect)
 {
-    const int width  = size * sizeConst;
-    const int height = size;
-    const int len    = strlen(string);
-    const int delta  = (width * CHAR_SPACING > width) ? (width * CHAR_SPACING) : width + 1;
+    const int width       = size * sizeConst;
+    const int height      = size;
+    const int len         = strlen(string);
+    const int widthDelta  = GetXDelta(size);
+    const int heightDelta = GetYDelta(size);
+    if (rect)
+    {
+        rect->x = 0;
+        rect->y = 0;
+        rect->w = 0;
+        rect->h = 0;
+    }
     if (len == 0)
         return NULL;
+    SDL_Point realSize = FontGetTextSize(string, size);
+    if (rect)
+    {
+        rect->w = realSize.x;
+        rect->h = realSize.y;
+    }
     if (len == 1)
         return FontRenderChar(renderer, *string);
-    SDL_Point realSize = FontGetSizeFromLength(len, size);
     SDL_Surface *surf = SDL_CreateRGBSurface(0, realSize.x, realSize.y, 32,
                                              R_MASK, G_MASK, B_MASK, A_MASK);
     if (surf)
@@ -263,21 +330,41 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
         SDL_SetColorKey(surf, SDL_TRUE, 0x00000000);
         for (; *string; string++)
         {
+            if (*string == '\n')
+            {
+                dimension.y += heightDelta;
+                dimension.x = 0;
+                continue;
+            }
+            if (*string == '\t')
+            {
+                dimension.x += widthDelta * tabWidth;
+                continue;
+            }
             s = CharSurface(*string);
             if (s)
                 SDL_BlitScaled(s, NULL, surf, &dimension);
-            dimension.x += delta;
+            dimension.x += widthDelta;
         }
     }
     SDL_Texture *result = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_SetTextureColorMod(result, 0x00, 0x00, 0x00);
     SDL_FreeSurface(surf);
-    if (rect)
-    {
-        rect->x = 0;
-        rect->y = 0;
-        rect->w = realSize.x;
-        rect->h = realSize.y;
-    }
     return result;
+}
+
+void FontSetHorizontalSpacing(double spacing)
+{
+    charHorizontalSpacing = spacing;
+}
+
+void FontSetTabWidth(int width)
+{
+    tabWidth = width;
+}
+
+void FontSetVerticalSpacing(double spacing)
+{
+    charVerticalSpacing = spacing;
 }
 

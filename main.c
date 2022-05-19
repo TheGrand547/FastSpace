@@ -71,8 +71,6 @@ int main(int argc, char **argv)
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
     bullets = ArrayNew();
 
-    CONST_STR(PLAYER);
-
     printf("player\n");
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
     ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
@@ -105,7 +103,7 @@ int main(int argc, char **argv)
 #endif // RELEASE
 
     LoadShipImages(); // HACKY
-    const char *message = "Question";
+    const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
@@ -288,7 +286,7 @@ int main(int argc, char **argv)
 
         int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
-        SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
+        //SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
         if (FLOAT_EQUAL(fps, oldfps))
         {

@@ -15,8 +15,9 @@ static void EnableSpecificDebug(DebugDisplayFlags flags);
 
 void EnableDebugDisplay(Uint8 flags)
 {
+    /*
     for (unsigned int i = 0; i < 8; i++)
     {
         if (flag | )
-    }
+    }*/
 }
