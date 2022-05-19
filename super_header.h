@@ -4,9 +4,11 @@
 #include <SDL2/SDL.h>
 #include "field.h"
 
+#define STR(x) #x
+#define CONST_STR(x) const char * x##_str = STR(x)
 #define UNUSED(x) (void)(x)
 #define FLOAT_EPSILON 0.0001
-#define FLOAT_EQUAL(x, y) fabs(x - y) > FLOAT_EPSILON
+#define FLOAT_EQUAL(x, y) fabs((x) - (y)) > FLOAT_EPSILON
 
 typedef enum
 {

@@ -1,4 +1,5 @@
 #include "font.h"
+#include <stdio.h>
 #include <string.h>
 #include <limits.h>
 
@@ -10,9 +11,9 @@
 #define CHAR_COUNT GRAND_CHAR_MAX - GRAND_CHAR_MIN + 1
 #define CHAR_SPACING 1.25
 #define DUPLICATE_OFFSET 32 // letter as char(lower) = letter as char(upper) + 32
-#define NUM_DUPLICATES 26  // 26 letters
+#define NUM_DUPLICATES 26   // 26 letters
 
-#define CHAR_BOUNDS_CHECK(x) (x > GRAND_CHAR_MAX) | (x < GRAND_CHAR_MIN)
+#define CHAR_BOUNDS_CHECK(x) ((x) > GRAND_CHAR_MAX) | ((x) < GRAND_CHAR_MIN)
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000
@@ -29,6 +30,8 @@
 // In case someone wants to make a larger(or smaller) version they just need to change
 // this line, CHAR_W, CHAR_H and the CompressedFontData array
 typedef Uint16 DataType;
+
+#define DATA_BIT_COUNT (sizeof(DataType) * 8)
 
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
 static Uint32 *CharDataPointers[CHAR_COUNT];
@@ -110,16 +113,15 @@ static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
 static int LoadCharacter(unsigned char ch);
 static char FontTransformChar(unsigned char ch);
 static SDL_Surface *CharSurface(unsigned char ch);
-static Uint32 *DataToPixelArray(const DataType based);
+static Uint32 *DataToPixelArray(const DataType source);
 
-static Uint32 *DataToPixelArray(const DataType based)
+static Uint32 *DataToPixelArray(const DataType source)
 {
-    #define DATA_BIT_COUNT (sizeof(DataType) * 8)
     Uint32 *array = calloc(CHAR_SIZE, sizeof(Uint32));
     if (array)
         for (int i = 0; i < CHAR_SIZE; i++)
         {
-            Uint32 current = ((based >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
+            Uint32 current = ((source >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
             array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
 #else // Little endian
@@ -132,6 +134,8 @@ static Uint32 *DataToPixelArray(const DataType based)
 /* 0 is good, nothing bad happened */
 int FontInit()
 {
+    if (CHAR_SIZE > DATA_BIT_COUNT)
+        fprintf(stderr, "Font: Loading char data from a storage type that is too small, visual issues may arise.");
     int result = 0;
     result |= !(SDL_WasInit(0) & SDL_INIT_VIDEO);
     if (!result)
@@ -244,6 +248,7 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
     const int width  = size * sizeConst;
     const int height = size;
     const int len    = strlen(string);
+    const int delta  = (width * CHAR_SPACING > width) ? (width * CHAR_SPACING) : width + 1;
     if (len == 0)
         return NULL;
     if (len == 1)
@@ -261,7 +266,7 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
             s = CharSurface(*string);
             if (s)
                 SDL_BlitScaled(s, NULL, surf, &dimension);
-            dimension.x += width * CHAR_SPACING;
+            dimension.x += delta;
         }
     }
     SDL_Texture *result = SDL_CreateTextureFromSurface(renderer, surf);

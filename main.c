@@ -35,6 +35,7 @@ static struct
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
 typedef enum {PLAYER, AI, MISC} Turn;
+static const char *turnNames[] = {STR(PLAYER), STR(AI), STR(MISC)};
 
 static Array *bullets;
 
@@ -69,6 +70,8 @@ int main(int argc, char **argv)
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
     bullets = ArrayNew();
+
+    CONST_STR(PLAYER);
 
     printf("player\n");
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
@@ -291,10 +294,18 @@ int main(int argc, char **argv)
         {
             oldfps = fps;
             sprintf(fpsText, "FPS: %4.2f", oldfps);
+            SDL_DestroyTexture(fpsTexture);
             fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
             SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
             fpsRect.x = WindowSizeX() - fpsRect.w;
-            fpsRect.y = 0; // TOP RIGHT
+            fpsRect.y = WindowSizeY() - fpsRect.h; // Bottom RIGHT
+        }
+        {
+            SDL_Rect turnRect;
+            SDL_Texture *turnText = FontRenderTextSize(GameRenderer, turnNames[turn], 15, &turnRect);
+            turnRect.x = WindowSizeX() - turnRect.w;
+            SDL_RenderCopy(GameRenderer, turnText, NULL, &turnRect);
+            SDL_DestroyTexture(turnText);
         }
         SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
 
