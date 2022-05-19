@@ -118,6 +118,8 @@ static int GetYDelta(size_t scale);
 static int LoadCharacter(unsigned char ch);
 static char FontTransformChar(unsigned char ch);
 static SDL_Surface *CharSurface(unsigned char ch);
+static size_t modifiedStrlen(const char *string);
+static size_t lineStrlen(const char *string);
 static Uint32 *DataToPixelArray(const DataType source);
 
 static Uint32 *DataToPixelArray(const DataType source)
@@ -231,11 +233,24 @@ static size_t modifiedStrlen(const char *string)
     return size;
 }
 
+// length in characters of the line, with trailing whitespace removed
+static size_t lineStrlen(const char *string)
+{
+    size_t realSize = strlen(string);
+    size_t size = modifiedStrlen(string);
+    for (; strchr(" \t", string[realSize - 1]); realSize--, size--)
+    {
+        if (string[realSize - 1] == '\t')
+            size -= tabWidth - 1;
+    }
+    return size;
+}
+
 SDL_Point FontGetTextSize(const char *string, size_t scale)
 {
     SDL_Point size = {0, 0};
-    const int length = strlen(string); // TODO: Have this include tabs as 4 chars
-    if (memchr(string, '\n', length))
+    const int length = modifiedStrlen(string);
+    if (memchr(string, '\n', strlen(string)))
     {
         char *buffer = calloc(length, sizeof(char));
         memcpy(buffer, string, length);
@@ -243,8 +258,7 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
         for (; delimited; delimited = strtok(NULL, "\n"))
         {
             size.y++;
-            // TODO: Trim trailing spaces
-            int len = strlen(delimited);
+            int len = lineStrlen(delimited);
             if (len > size.x)
                 size.x = len;
         }

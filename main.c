@@ -103,10 +103,12 @@ int main(int argc, char **argv)
 #endif // RELEASE
 
     LoadShipImages(); // HACKY
+    //const char *message = "Question\t\t\t\t\t\t\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
     const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
+    printf("%i %i\n", sizer.w, sizer.h);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
 
     SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
