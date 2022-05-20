@@ -9,6 +9,8 @@
 #define UNUSED(x) (void)(x)
 #define FLOAT_EPSILON 0.0001
 #define FLOAT_EQUAL(x, y) fabs((x) - (y)) > FLOAT_EPSILON
+#define NULL_CHECK(x) if (!x) return;
+#define NULL_CHECK_RETURN(x, ret) if (!x) return ret;
 
 typedef enum
 {

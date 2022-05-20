@@ -3,6 +3,10 @@
 #define MISC_H
 #include <SDL2/SDL.h>
 
+// TODO: Move these
+char **StrSplit(const char *string, const char *delimiters);
+void StrSplitCleanup(char **strings);
+
 void OutputImage(SDL_Surface *surf);
 
 #endif // MISC_H

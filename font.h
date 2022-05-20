@@ -14,6 +14,9 @@ SDL_Point FontGetCharSizeWithPadding(size_t scale);
 SDL_Texture *FontRenderChar(SDL_Renderer *renderer, unsigned char ch);
 SDL_Texture *FontRenderText(SDL_Renderer *renderer, const char *string, size_t size);
 SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size_t size, SDL_Rect *rect);
+SDL_Texture *FontRenderTextWrapped(SDL_Renderer *renderer, const char *string, size_t size, size_t maxWidth);
+SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *string, size_t size,
+                                       size_t maxWidth, SDL_Rect *rect);
 
 void FontSetHorizontalSpacing(double spacing);
 void FontSetTabWidth(int width);

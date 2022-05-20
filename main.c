@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "draw.h"
 #include "font.h"
+#include "misc.h"
 #include "player.h"
 #include "setup.h"
 #include "ship.h"
@@ -101,13 +102,21 @@ int main(int argc, char **argv)
 #ifndef RELEASE
     SDL_AddTimer(20, fps_timer_callback, &fps);
 #endif // RELEASE
-
+    SDL_Point feofew = FontGetTextSize("\t", 15);
+    printf("Newline size: %i %i\n", feofew.x, feofew.y);
     LoadShipImages(); // HACKY
-    //const char *message = "Question\t\t\t\t\t\t\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
-    const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
+    //const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
+    const char *message = "what a god damn gamer grund is wowie\n he's just so big brain\tfuck you";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
-    SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
+    //SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
+    SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
+    char **hams = StrSplit(message, "\n\t");
+    for (unsigned int i = 0; hams[i]; i++)
+    {
+        printf("Substring %i: %s\n", i, hams[i]);
+    }
+    StrSplitCleanup(hams);
     printf("%i %i\n", sizer.w, sizer.h);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
 

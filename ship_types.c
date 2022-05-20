@@ -1,11 +1,8 @@
 #include "ship_types.h"
 #include <stdio.h>
 #include "draw.h"
-#include "font.h" // TODO: This is a bad dependency
 #include "misc.h"
 #include "player.h"
-
-#define NULL_CHECK(x) if (!x) return;
 
 // TODO: Make logger with freopen() on stderr
 

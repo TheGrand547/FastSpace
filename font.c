@@ -272,6 +272,7 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
     // Subtract the trailing spacing
     size.x = (size.x * GetXDelta(scale) - (charHorizontalSpacing - 1));
     size.y = (size.y * GetYDelta(scale) - (charVerticalSpacing - 1));
+    // TODO: There is some off by one error here i'm missing
     return size;
 }
 
@@ -325,7 +326,7 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
         rect->w = 0;
         rect->h = 0;
     }
-    if (len == 0)
+    if ((len == 0) | (!string))
         return NULL;
     SDL_Point realSize = FontGetTextSize(string, size);
     if (rect)
@@ -367,6 +368,48 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
     return result;
 }
 
+SDL_Texture *FontRenderTextWrapped(SDL_Renderer *renderer, const char *string, size_t size, size_t maxWidth)
+{
+    return FontRenderTextWrappedSize(renderer, string, size, maxWidth, NULL);
+}
+
+#include "misc.h"
+SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *string, size_t size,
+                                       size_t maxWidth, SDL_Rect *rect)
+{
+    SDL_Point unmodified = FontGetTextSize(string, size);
+    if ((size_t) unmodified.x <= maxWidth)
+        return FontRenderTextSize(renderer, string, size, rect);
+    size_t currentWidth = 0;
+    const size_t len = strlen(string);
+    const size_t gamerr = GetXDelta(size);
+    char *newstring = calloc(2 * len, sizeof(char));
+    size_t index = 0;
+
+    char **datum = StrSplit(string, " ");
+    for (unsigned int i = 0; datum[i]; i++)
+    {
+        char *current = datum[i];
+        const size_t subSize = FontGetTextSize(current, size).x;
+        const size_t subLen = strlen(current);
+        if ((currentWidth + subSize >= maxWidth) | !!strstr(current, "\n"))
+        {
+            currentWidth = 0;
+            newstring[index++] = '\n';
+        }
+        currentWidth += subSize + gamerr;
+        strcpy(newstring + index, current);
+        index += subLen;
+        newstring[index] = ' ';
+        index += 1;
+    }
+    StrSplitCleanup(datum);
+    newstring = realloc(newstring, index);
+    SDL_Texture *result = FontRenderTextSize(renderer, newstring, size, rect);
+    free(newstring);
+    return result;
+}
+
 void FontSetHorizontalSpacing(double spacing)
 {
     charHorizontalSpacing = spacing;
@@ -381,4 +424,3 @@ void FontSetVerticalSpacing(double spacing)
 {
     charVerticalSpacing = spacing;
 }
-
