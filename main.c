@@ -95,15 +95,17 @@ int main(int argc, char **argv)
     // This should probably be wrapped up somewhere nicely
     float fps = 1;
     float oldfps = 0;
-    char fpsText[13]; // FPS: 0000.00 -> 4 + 2 + 4 + 1 + 2 + 1 for null -> 13
+    char fpsText[11]; // FPS: 0000 -> 4 + 2 + 4 + 1 for null -> 10
     SDL_Texture *fpsTexture;
     SDL_Rect fpsRect;
 
 #ifndef RELEASE
-    SDL_AddTimer(20, fps_timer_callback, &fps);
+    SDL_AddTimer(100, fps_timer_callback, &fps);
 #endif // RELEASE
-    SDL_Point feofew = FontGetTextSize("\t", 15);
-    printf("Newline size: %i %i\n", feofew.x, feofew.y);
+
+    SDL_Point pointer = FontGetTextSize("AB", 20);
+    printf("SIZER: %i %i\n", pointer.x, pointer.y);
+
     LoadShipImages(); // HACKY
     //const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
     const char *message = "what a god damn gamer grund is wowie\n he's just so big brain\tfuck you";
@@ -302,7 +304,7 @@ int main(int argc, char **argv)
         if (FLOAT_EQUAL(fps, oldfps))
         {
             oldfps = fps;
-            sprintf(fpsText, "FPS: %4.2f", oldfps);
+            sprintf(fpsText, "FPS: %4.0f", oldfps);
             SDL_DestroyTexture(fpsTexture);
             fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
             SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);

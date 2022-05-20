@@ -3,8 +3,10 @@
 #include <string.h>
 #include <limits.h>
 
+// These can be modified as needed if you want to use my code to implement your own font
 #define CHAR_W 3
 #define CHAR_H 5
+
 #define CHAR_SIZE CHAR_W * CHAR_H
 #define GRAND_CHAR_MIN ' '
 #define GRAND_CHAR_MAX '~' + 1
@@ -126,7 +128,7 @@ static Uint32 *DataToPixelArray(const DataType source)
 {
     Uint32 *array = calloc(CHAR_SIZE, sizeof(Uint32));
     if (array)
-        for (int i = 0; i < CHAR_SIZE; i++)
+        for (unsigned int i = 0; i < CHAR_SIZE; i++)
         {
             Uint32 current = ((source >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -252,8 +254,7 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
     const int length = modifiedStrlen(string);
     if (memchr(string, '\n', strlen(string)))
     {
-        char *buffer = calloc(length, sizeof(char));
-        memcpy(buffer, string, length);
+        char *buffer = strdup(string);
         char *delimited = strtok(buffer, "\n");
         for (; delimited; delimited = strtok(NULL, "\n"))
         {
@@ -270,9 +271,8 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
         size.y = 1;
     }
     // Subtract the trailing spacing
-    size.x = (size.x * GetXDelta(scale) - (charHorizontalSpacing - 1));
-    size.y = (size.y * GetYDelta(scale) - (charVerticalSpacing - 1));
-    // TODO: There is some off by one error here i'm missing
+    size.x = (size.x * GetXDelta(scale)) - scale * sizeConst * (charHorizontalSpacing - 1);
+    size.y = (size.y * GetYDelta(scale)) - scale * (charVerticalSpacing - 1);
     return size;
 }
 
@@ -373,7 +373,6 @@ SDL_Texture *FontRenderTextWrapped(SDL_Renderer *renderer, const char *string, s
     return FontRenderTextWrappedSize(renderer, string, size, maxWidth, NULL);
 }
 
-#include "misc.h"
 SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *string, size_t size,
                                        size_t maxWidth, SDL_Rect *rect)
 {
@@ -382,7 +381,7 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
         return FontRenderTextSize(renderer, string, size, rect);
     size_t currentWidth = 0;
     const size_t len = strlen(string);
-    const size_t gamerr = GetXDelta(size);
+    const size_t xDelta = GetXDelta(size);
     char *newstring = calloc(2 * len, sizeof(char));
     size_t index = 0;
 
@@ -397,11 +396,10 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
             currentWidth = 0;
             newstring[index++] = '\n';
         }
-        currentWidth += subSize + gamerr;
+        currentWidth += subSize + xDelta;
         strcpy(newstring + index, current);
         index += subLen;
-        newstring[index] = ' ';
-        index += 1;
+        newstring[index++] = ' ';
     }
     StrSplitCleanup(datum);
     newstring = realloc(newstring, index);
@@ -423,4 +421,34 @@ void FontSetTabWidth(int width)
 void FontSetVerticalSpacing(double spacing)
 {
     charVerticalSpacing = spacing;
+}
+
+char **StrSplit(const char *string, const char *delimiters)
+{
+    const size_t size = strlen(string);
+    // A run time modifiable copy of the input string
+    char *copy = strdup(string);
+    // Could be up to string length number of substrings
+    char **strs = calloc(size, sizeof(char*));
+    if (strs)
+    {
+        size_t substrings = 0;
+        char *data = strtok(copy, delimiters);
+        do
+        {
+            strs[substrings++] = strdup(data);
+        } while ((data = strtok(NULL, delimiters)));
+        // Reduce size to the number substrings plus the null terminator
+        strs = realloc(strs, (substrings + 1) * sizeof(char*));
+    }
+    free(copy);
+    return strs;
+}
+
+void StrSplitCleanup(char **strings)
+{
+    char **original = strings;
+    for (; *strings; strings++)
+        free(*strings);
+    free(original);
 }

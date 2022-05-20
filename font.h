@@ -3,6 +3,9 @@
 #define GRAND_FONT_H
 #include <SDL2/SDL.h>
 
+char **StrSplit(const char *string, const char *delimiters);
+void StrSplitCleanup(char **strings);
+
 int FontInit(); // Load the alphabet characters and nothing else
 int FontQuit(); // Free all memory allocated via the font system
 int FontLoadAllCharacters(); // Force the program to load all of the characters into memory
