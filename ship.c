@@ -57,7 +57,7 @@ void TurnLeft(Ship *ship)
     ship->facing--;
 }
 
-void ColorShip(Ship *ship, Uint32 color)
+void ColorShip(Ship *ship, uint32_t color)
 {
     if (ship)
         SDL_GetRGBA(color, DisplayPixelFormat, &ship->color.r,
@@ -74,7 +74,7 @@ SDL_Point ShipNextTile(Ship *ship)
     return next;
 }
 
-Ship *CreateGenericShip(Uint8 x, Uint8 y, Facing facing)
+Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = (Ship*) calloc(1, sizeof(Ship));
     SDL_Log("%p Created\n", (void*) ship);

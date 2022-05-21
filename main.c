@@ -6,6 +6,7 @@
 #include "array.h"
 #include "button.h"
 #include "constants.h"
+#include "debug_display.h"
 #include "draw.h"
 #include "font.h"
 #include "misc.h"
@@ -40,19 +41,10 @@ static const char *turnNames[] = {STR(PLAYER), STR(AI), STR(MISC)};
 
 static Array *bullets;
 
-static SDL_atomic_t frames;
-
-#ifndef RELEASE
-Uint32 fps_timer_callback(Uint32 interval, void *data);
-#endif // RELEASE
-
 int main(int argc, char **argv)
 {
     int loop = 1;
-    printf(">>");
-    for (int i = 0; i < argc; i++)
-        printf("%s ", argv[i]);
-    printf("\n");
+    InitDebugDisplay(argv);
 
     if (InitializeLibraries())
     {
@@ -63,7 +55,7 @@ int main(int argc, char **argv)
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 #ifndef UNLIMITED_FPS
-    Uint32 time;
+    uint32_t time;
 #endif // UNLIMITED_FPS
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
@@ -81,31 +73,17 @@ int main(int argc, char **argv)
 
     Turn turn = PLAYER;
     Action selection = NO_ACTION;
-    Uint32 turnTimer = 0;
+    uint32_t turnTimer = 0;
     unsigned int turnIndex = 0;
 
     struct
     {
-        Uint8 switchTurn : 1; // 5 unused
-        Uint8 windowSize : 1;
-        Uint8 bufferState : 1;
+        uint8_t switchTurn : 1; // 5 unused
+        uint8_t windowSize : 1;
+        uint8_t bufferState : 1;
     } flags;
     flags.windowSize = 1;
-
-    // This should probably be wrapped up somewhere nicely
-    float fps = 1;
-    float oldfps = 0;
-    char fpsText[11]; // FPS: 0000 -> 4 + 2 + 4 + 1 for null -> 10
-    SDL_Texture *fpsTexture;
-    SDL_Rect fpsRect;
-
-#ifndef RELEASE
-    SDL_AddTimer(100, fps_timer_callback, &fps);
-#endif // RELEASE
-
-    SDL_Point pointer = FontGetTextSize("AB", 20);
-    printf("SIZER: %i %i\n", pointer.x, pointer.y);
-
+    EnableDebugDisplays(0);
     LoadShipImages(); // HACKY
     //const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
     const char *message = "what a god damn gamer grund is wowie\n he's just so big brain\tfuck you";
@@ -128,6 +106,8 @@ int main(int argc, char **argv)
                             {{800, 100}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
     while (loop)
     {
+        //printf("%s\n", SDL_GetError());
+        SetLocation(NULL, TOP_RIGHT);
 #ifndef UNLIMITED_FPS
         time = SDL_GetTicks();
 #endif // UNLIMITED_FPS
@@ -301,33 +281,26 @@ int main(int argc, char **argv)
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
         //SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
-        if (FLOAT_EQUAL(fps, oldfps))
-        {
-            oldfps = fps;
-            sprintf(fpsText, "FPS: %4.0f", oldfps);
-            SDL_DestroyTexture(fpsTexture);
-            fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
-            SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
-            fpsRect.x = WindowSizeX() - fpsRect.w;
-            fpsRect.y = WindowSizeY() - fpsRect.h; // Bottom RIGHT
-        }
+        DebugDisplayDraw();
+        /*
         {
             SDL_Rect turnRect;
             SDL_Texture *turnText = FontRenderTextSize(GameRenderer, turnNames[turn], 15, &turnRect);
-            turnRect.x = WindowSizeX() - turnRect.w;
+            SetLocation(&turnRect, TOP_RIGHT);
+            SDL_SetTextureColorMod(turnText, 0xFF, 0x00, 0x00);
             SDL_RenderCopy(GameRenderer, turnText, NULL, &turnRect);
             SDL_DestroyTexture(turnText);
         }
-        SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
+        */
 
         // End of frame stuff
         SDL_RenderPresent(GameRenderer);
-        SDL_AtomicAdd(&frames, 1);
 #ifndef UNLIMITED_FPS
         if (SDL_GetTicks() - time <= FPS_LIMIT_THRESHOLD)
             SDL_Delay(FPS_LIMIT_RATE);
 #endif // UNLIMITED_FPS
     }
+    printf("IN THE CLEAR\n");
     FreeShipImages();
     CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);
@@ -343,17 +316,3 @@ void ShootGamer(Ship *ship)
     ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
     ArrayAppend(bullets, bullet);
 }
-
-#ifndef RELEASE
-Uint32 fps_timer_callback(Uint32 interval, void *data)
-{
-    const float f = SDL_AtomicGet(&frames);
-    const float iv = interval * 0.001f;
-
-    *(float*) data = f / iv;
-
-    /* Reset frame counter */
-    SDL_AtomicSet(&frames, 0);
-    return interval;
-}
-#endif // RELEASE

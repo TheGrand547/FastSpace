@@ -38,7 +38,7 @@ static int tabWidth = 4;
 static double charHorizontalSpacing = 1.25;
 static double charVerticalSpacing = 1.25;
 static const double sizeConst = ((double) CHAR_W) / ((double) (CHAR_H));
-static Uint32 *CharDataPointers[CHAR_COUNT];
+static uint32_t *CharDataPointers[CHAR_COUNT];
 static SDL_Surface *CharSurfaces[CHAR_COUNT];
 static SDL_Texture *CharTextures[CHAR_COUNT];
 static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
@@ -122,15 +122,15 @@ static char FontTransformChar(unsigned char ch);
 static SDL_Surface *CharSurface(unsigned char ch);
 static size_t modifiedStrlen(const char *string);
 static size_t lineStrlen(const char *string);
-static Uint32 *DataToPixelArray(const DataType source);
+static uint32_t *DataToPixelArray(const DataType source);
 
-static Uint32 *DataToPixelArray(const DataType source)
+static uint32_t *DataToPixelArray(const DataType source)
 {
-    Uint32 *array = calloc(CHAR_SIZE, sizeof(Uint32));
+    uint32_t *array = calloc(CHAR_SIZE, sizeof(uint32_t));
     if (array)
         for (unsigned int i = 0; i < CHAR_SIZE; i++)
         {
-            Uint32 current = ((source >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
+            uint32_t current = ((source >> (DATA_BIT_COUNT - 1 - i)) & 1) ? 0xFF : 0x00;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
             array[i] = (current << 24) + (current << 16) + (current << 8) + 0xFF;
 #else // Little endian
@@ -196,7 +196,7 @@ static int LoadCharacter(unsigned char index)
     index = FontTransformChar(index);
     if (CharSurfaces[(int) index])
         return 0;
-    Uint32 *pointer = DataToPixelArray(CompressedFontData[(int) index]);
+    uint32_t *pointer = DataToPixelArray(CompressedFontData[(int) index]);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
                                               R_MASK, G_MASK, B_MASK, A_MASK);
     SDL_SetColorKey(s, SDL_TRUE, 0x00000000);

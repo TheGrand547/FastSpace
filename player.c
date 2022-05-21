@@ -1,7 +1,7 @@
 #include "player.h"
 #include <stdio.h>
 
-Ship *CreatePlayer(Uint8 x, Uint8 y, Facing facing)
+Ship *CreatePlayer(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = CreateGenericShip(x, y, facing);
     if (ship)

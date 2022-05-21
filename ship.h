@@ -11,12 +11,12 @@ int FacingY(Facing facing);
 // wish I could have small pointers or something
 typedef struct __ship
 {
-    Uint8 x : 4, y : 4;
+    uint8_t x : 4, y : 4;
     // Full Uint
 
-    Uint8 facing : 2;
-    Uint8 type : 4;
-    Uint8 counter : 2;
+    uint8_t facing : 2;
+    uint8_t type : 4;
+    uint8_t counter : 2;
     // Full Uint
 
     Color color; // 4 bytes
@@ -32,8 +32,8 @@ void MoveShip(void *data);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
 
-void ColorShip(Ship *ship, Uint32 color);
+void ColorShip(Ship *ship, uint32_t color);
 
-Ship* CreateGenericShip(Uint8 x, Uint8 y, Facing facing);
+Ship* CreateGenericShip(uint8_t x, uint8_t y, Facing facing);
 SDL_Point ShipNextTile(Ship *ship);
 #endif // SHIP_H

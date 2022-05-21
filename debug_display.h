@@ -17,6 +17,10 @@ typedef enum {
 // File for all potentially displayed things regarding debug stuff
 // Like AI timer
 void InitDebugDisplay(char **argv);
-void EnableDebugDisplay(Uint8 flags);
+void EnableDebugDisplays(uint8_t flags);
+
+void DebugDisplayDraw();
+
+void SetLocation(SDL_Rect *rect, DisplayLocation location);
 
 #endif // DEBUG_DISPLAY_H

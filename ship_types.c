@@ -20,10 +20,10 @@ struct ShipData
 };
 
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NULL,       NULL}, // None ship
-    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  "ship.bmp", NULL}, // Circle ship
-    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  NULL,       NULL}, // Player ship
-    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    NULL,       NULL}  // Generic Bullet
+    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NULL, NULL}, // None ship
+    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  NULL, NULL}, // Circle ship
+    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  NULL, NULL}, // Player ship
+    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    NULL, NULL}  // Generic Bullet
 };
 
 /* TODO: Get this thing to work
@@ -125,7 +125,7 @@ void DrawShip(void *data)
 //** Ship Function Map Implementations **//
 
 /** Generic ship **/
-Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing)
+Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing)
 {
     return CreateGenericShip(x, y, facing);
 }
@@ -155,7 +155,7 @@ void DrawBlankShip(Ship *ship)
 }
 
 /** Circle Ship **/
-Ship *CreateCircleShip(Uint8 x, Uint8 y, Facing facing)
+Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = CreateGenericShip(x, y, facing);
     if (ship)
@@ -183,7 +183,7 @@ Action CircleShip(Ship *ship)
 }
 
 /** Generic Bullet **/
-Ship *CreateBullet(Uint8 x, Uint8 y, Facing facing)
+Ship *CreateBullet(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *bullet = CreateGenericShip(x, y, facing);
     if (bullet)
@@ -245,7 +245,7 @@ static SDL_Rect GetDrawArea(Ship *ship)
 
 SDL_Texture *Gamer()
 {
-    Uint8 array[10 * 10] = {
+    uint8_t array[10 * 10] = {
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
         0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,

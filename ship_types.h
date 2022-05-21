@@ -19,7 +19,7 @@ void LoadShipImages();
 void FreeShipImages();
 
 // TODO: Rename ship action functions
-typedef Ship *(*ShipCreateFunc)(Uint8 x, Uint8 y, Facing facing);
+typedef Ship *(*ShipCreateFunc)(uint8_t x, uint8_t y, Facing facing);
 typedef Action (*ShipActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
 typedef void (*ShipFreeFunc)(Ship *ship);
 typedef void (*ShipDrawFunc)(Ship *ship);
@@ -38,19 +38,19 @@ void DrawShipType(Ship *ship);
 //** Ship Function Map Declarations **//
 
 /** None Ship **/
-Ship *CreateNoneShip(Uint8 x, Uint8 y, Facing facing);
+Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing);
 Action NoneShip(Ship *ship);
 void FreeShip(Ship *ship);
 void DrawBlankShip(Ship *ship);
 
 /** Circle Ship **/
-Ship *CreateCircleShip(Uint8 x, Uint8 y, Facing facing);
+Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing);
 Action CircleShip(Ship *ship);
 #define FreeCircleShip FreeShip
 #define DrawCircleShip DrawShipType
 
 /** Generic Bullet **/
-Ship *CreateBullet(Uint8, Uint8 y, Facing facing);
+Ship *CreateBullet(uint8_t, uint8_t y, Facing facing);
 Action GenericBullet(Ship *ship);
 #define FreeBullet FreeShip
 void DrawBullet(Ship *ship);
