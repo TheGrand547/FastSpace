@@ -95,14 +95,13 @@ int main(int argc, char **argv)
     // TODO: Oh god i broke text wrapping
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
-    SDL_Texture *tt = Gamer();
     printf("%i %i\n", sizer.w, sizer.h);
 
     SDL_Vertex lists[4] = {
-        {{200, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 0}},
-        {{400, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 0}},
-        {{200, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 1}},
-        {{400, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 1}}
+        {{600, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 0}},
+        {{800, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 0}},
+        {{600, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 1}},
+        {{800, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 1}}
     };
     while (loop)
     {
@@ -279,7 +278,7 @@ int main(int argc, char **argv)
 
         int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
-        SDL_RenderGeometry(GameRenderer, tt, lists, 4, rs, 6);
+        SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
         DebugDisplayDraw();
 

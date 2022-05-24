@@ -39,11 +39,11 @@ void OutlineTile(uint8_t x, uint8_t y)
     SDL_RenderFillRect(renderer, &rect);
 }
 
-uint32_t *Uint8PixelsToUint32Pixels(const uint8_t *pointer, int width, int height)
+uint32_t *Uint8PixelsToUint32Pixels(const uint8_t *pointer, size_t width, size_t height)
 {
     uint32_t *array = calloc(width * height, sizeof(uint32_t));
     if (array)
-        for (int i = 0; i < width * height; i++)
+        for (size_t i = 0; i < width * height; i++)
         {
             uint32_t current = pointer[i];
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN

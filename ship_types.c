@@ -16,15 +16,15 @@ struct ShipData
     const ShipActionFunc action;
     const ShipFreeFunc free;
     const ShipDrawFunc draw;
-    ShipDataFunc imageData;
+    const ShipDataFunc imageData;
     SDL_Texture *texture;
 };
 
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NoneImageData, NULL}, // None ship
-    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  CircleImageData, NULL}, // Circle ship
-    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  PlayerImageData, NULL}, // Player ship
-    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    BulletImageData, NULL}  // Generic Bullet
+    {CreateNoneShip,   NoneShip,      FreeShip,       DrawShipType, NoneImageData, NULL}, // None ship
+    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType, CircleImageData, NULL}, // Circle ship
+    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType, PlayerImageData, NULL}, // Player ship
+    {CreateBullet,     GenericBullet, FreeBullet,     DrawShipType, BulletImageData, NULL}  // Generic Bullet
 };
 
 /* TODO: Get this thing to work
@@ -39,7 +39,7 @@ ShipsData[BULLET]    = {GenericBullet, FreeBullet,     DrawBullet,    NULL,     
 
 static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
 {
-    struct ShipImageData *data = ShipsData[index].imageData();
+    const struct ShipImageData *data = ShipsData[index].imageData();
     if (data)
     {
         if (ShipsData[index].texture)
@@ -47,11 +47,11 @@ static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
             SDL_DestroyTexture(ShipsData[index].texture);
             ShipsData[index].texture = NULL;
         }
-        uint32_t *pixels = Uint8PixelsToUint32Pixels(data.pixels, data.width, data.height);
+        uint32_t *pixels = Uint8PixelsToUint32Pixels(data->pixels, data->width, data->height);
         // TODO: Look into these masks being #defined somewhere
-        SDL_Surface *surf = SDL_CreateRGBSurfaceFrom(pixels, data.width, data.height,
-                                                     sizeof(uint32_t), sizeof(uint32_t) * data.width,
-                                                     0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF00000000);
+        SDL_Surface *surf = SDL_CreateRGBSurfaceFrom(pixels, data->width, data->height,
+                                                     sizeof(uint32_t) * 8, sizeof(uint32_t) * data->width,
+                                                     0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
         if (surf)
         {
             SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0x00, 0x00, 0x00));
@@ -138,8 +138,7 @@ Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing)
     return CreateGenericShip(x, y, facing);
 }
 
-//Action NoneShip(Ship *ship)
-ShipActionFunc NoneShip
+Action NoneShip(Ship *ship)
 {
     if (ship->type == NONE_SHIP)
         SDL_Log("NoneShip %p was activated\n", (void*) ship);
@@ -225,6 +224,7 @@ void DrawShipType(Ship *ship)
     {
         if (ShipsData[ship->type].imageData)
             LoadShipimage(GameRenderer, ship->type);
+        //printf("After load: %p\n", ShipsData[ship->type].texture);
         DrawBlankShip(ship);
         return;
     }
