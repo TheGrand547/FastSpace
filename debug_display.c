@@ -1,50 +1,94 @@
 #include "debug_display.h"
+#include <math.h>
 #include <stdio.h>
 #include "field.h"
 #include "font.h"
 #include "super_header.h"
 
+#define EnumToIndex(x) ((size_t) log2(x))
+
 static uint8_t InitializedDisplays;
 static DisplayLocation DisplaysPlace[] = {TOP_RIGHT, TOP_RIGHT, TOP_RIGHT};
+static const char *FlagStrs[] = {STR(SHOW_FPS), STR(SHOW_TURN), STR(SHOW_COUNTDOWN)};
 
-void InitDebugDisplay(char **argv)
+// FPS Declarations
+static void EnableFpsDisplay(void *data);
+static void DestroyFpsDisplay();
+static void DrawFpsDisplay();
+
+// Turn Declarations
+static void EnableTurnDisplay(void *data);
+static void DestroyTurnDisplay();
+static void DrawTurnDisplay();
+
+static void SetLocation(SDL_Rect *rect, DisplayLocation location);
+
+void InitDebugDisplay(int argc, char **argv)
 {
     InitializedDisplays = 0;
     printf(">>");
-    for (; *argv ; argv++)
-        printf("%s", *argv);
+    for (int i = 0; i < argc; i++)
+    {
+        printf("%s", argv[i]);
+    }
     printf("\n");
 }
 
-static void EnableSpecificDebug(DebugDisplayFlags flags);
-static void EnableFpsDisplay();
-static void FpsDisplayInternal();
-static void DestroyFpsDisplay();
-
-void EnableDebugDisplays(uint8_t flags)
+void QuitDebugDisplay()
 {
-    for (unsigned int i = 0; i < 8; i++)
+    const uint8_t toKill = InitializedDisplays;
+    if (!toKill)
+        return;
+    if (toKill & SHOW_FPS)
+        DestroyFpsDisplay();
+    if (toKill & SHOW_TURN)
+        DestroyTurnDisplay();
+    InitializedDisplays = 0;
+}
+
+void EnableDebugDisplay(DebugDisplayFlags flag, DisplayLocation location, void *data)
+{
+    switch (flag)
     {
-        if ((flags >> i) & 1)
-            printf("%i\n", flags >> i);
+        case SHOW_FPS:
+        {
+            EnableFpsDisplay(data);
+            break;
+        }
+        case SHOW_TURN:
+        {
+            EnableTurnDisplay(data);
+            break;
+        }
+        default:
+        {
+            printf("Flag '%s' has not be implemented\n", FlagStrs[EnumToIndex(flag)]);
+            return;
+        }
     }
-    EnableFpsDisplay();
+    DisplaysPlace[EnumToIndex(flag)] = location;
+    InitializedDisplays |= flag;
 }
 
 void DebugDisplayDraw()
 {
-    FpsDisplayInternal();
+    // TODO: There's a way to write this properly
+    SetLocation(NULL, TOP_RIGHT);
+    if (InitializedDisplays & SHOW_FPS)
+        DrawFpsDisplay();
+    if (InitializedDisplays & SHOW_TURN)
+        DrawTurnDisplay();
 }
 
 /** FPS stuff **/
 // Must be static or it will be leaked
 static SDL_Texture *fpsTexture = NULL;
-// Delay
-#define FPS_MS_UPDATE_FREQ 50
+#define FPS_MS_UPDATE_FREQ 50 // Delay between fps polls
 
-void EnableFpsDisplay()
+void EnableFpsDisplay(void *data)
 {
-    // Nothing here, epic
+    UNUSED(data);
+    InitializedDisplays |= SHOW_FPS;
 }
 
 void DestroyFpsDisplay()
@@ -53,7 +97,7 @@ void DestroyFpsDisplay()
     fpsTexture = NULL;
 }
 
-void FpsDisplayInternal()
+void DrawFpsDisplay()
 {
     static double fps = 0;
     static uint32_t counted = 0;
@@ -72,12 +116,41 @@ void FpsDisplayInternal()
         fpsStart = SDL_GetTicks();
         counted = 0;
     }
-    SetLocation(&fpsRect, TOP_RIGHT);
+    SetLocation(&fpsRect, DisplaysPlace[EnumToIndex(SHOW_FPS)]);
     SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
     counted++;
 }
 
-void SetLocation(SDL_Rect *rect, DisplayLocation location)
+
+/** Turn Timer Stuff **/
+static SDL_Texture *turnTexture = NULL;
+static const Turn *currentTurn = NULL;
+static const char *turnNames[] = {STR(PLAYER), STR(AI), STR(MISC)};
+
+static void EnableTurnDisplay(void *data)
+{
+    currentTurn = (Turn*) data;
+}
+
+static void DestroyTurnDisplay()
+{
+    SDL_DestroyTexture(turnTexture);
+    turnTexture = NULL;
+    currentTurn = NULL;
+}
+
+static void DrawTurnDisplay()
+{
+    if (!currentTurn)
+        return;
+    SDL_Rect turnRect;
+    turnTexture = FontRenderTextSize(GameRenderer, turnNames[*currentTurn], 15, &turnRect);
+    SetLocation(&turnRect, DisplaysPlace[EnumToIndex(SHOW_TURN)]);
+    SDL_SetTextureColorMod(turnTexture, 0xFF, 0x00, 0x00);
+    SDL_RenderCopy(GameRenderer, turnTexture, NULL, &turnRect);
+}
+
+static void SetLocation(SDL_Rect *rect, DisplayLocation location)
 {
     static int offsets[] = {0, 0, 0, 0};
     if (!rect)
@@ -94,9 +167,4 @@ void SetLocation(SDL_Rect *rect, DisplayLocation location)
     else
         rect->y = offset;
     offsets[location] += rect->h * 1.25;
-}
-
-static void EnableSpecificDebug(DebugDisplayFlags flags)
-{
-    UNUSED(flags);
 }

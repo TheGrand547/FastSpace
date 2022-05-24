@@ -15,11 +15,13 @@
 
 typedef enum
 {
-    UP = 0,
-    RIGHT = 1,
-    DOWN = 2,
-    LEFT = 3
+    UP, RIGHT, DOWN, LEFT
 } Facing;
+
+typedef enum
+{
+    PLAYER, AI, MISC
+} Turn;
 
 typedef SDL_Color Color;
 

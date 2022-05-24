@@ -30,7 +30,7 @@
 
 // In case someone wants to make a larger(or smaller) version they just need to change
 // this line, CHAR_W, CHAR_H and the CompressedFontData array
-typedef Uint16 DataType;
+typedef uint16_t DataType;
 
 #define DATA_BIT_COUNT (sizeof(DataType) * 8)
 
@@ -76,7 +76,7 @@ static const DataType CompressedFontData[CHAR_COUNT - NUM_DUPLICATES] =
     0x88A8, // >
     0xC504, // ?
     0xFFFF, // @ <- Need to find something for this
-    0xF7DA, // A
+    0x57DA, // A
     0xD75C, // B
     0xF24E, // C
     0xD6DC, // D

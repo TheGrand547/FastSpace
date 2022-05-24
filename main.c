@@ -36,15 +36,13 @@ static struct
     const Uint16 turnDelay;
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
-typedef enum {PLAYER, AI, MISC} Turn;
-static const char *turnNames[] = {STR(PLAYER), STR(AI), STR(MISC)};
-
 static Array *bullets;
 
 int main(int argc, char **argv)
 {
+    UNUSED(argc);
     int loop = 1;
-    InitDebugDisplay(argv);
+    InitDebugDisplay(argc, argv);
 
     if (InitializeLibraries())
     {
@@ -76,6 +74,7 @@ int main(int argc, char **argv)
     uint32_t turnTimer = 0;
     unsigned int turnIndex = 0;
 
+    // TODO: Move this externally
     struct
     {
         uint8_t switchTurn : 1; // 5 unused
@@ -83,46 +82,47 @@ int main(int argc, char **argv)
         uint8_t bufferState : 1;
     } flags;
     flags.windowSize = 1;
-    EnableDebugDisplays(0);
+
+
+    EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
+    EnableDebugDisplay(SHOW_TURN, TOP_RIGHT, &turn);
+    EnableDebugDisplay(SHOW_COUNTDOWN, TOP_RIGHT, NULL);
+
     LoadShipImages(); // HACKY
-    //const char *message = "Question\nLINE2islongerthanline1\n12\tfioe\tfoief\nwhyaretheysmaller";
-    const char *message = "what a god damn gamer grund is wowie\n he's just so big brain\tfuck you";
+    const char *message = "awww yeah text wrapping what a gamer";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
-    //SDL_Texture *t = FontRenderTextSize(GameRenderer, message, 20, &sizer);
+    // TODO: Oh god i broke text wrapping
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
-    char **hams = StrSplit(message, "\n\t");
-    for (unsigned int i = 0; hams[i]; i++)
-    {
-        printf("Substring %i: %s\n", i, hams[i]);
-    }
-    StrSplitCleanup(hams);
-    printf("%i %i\n", sizer.w, sizer.h);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
+    SDL_Texture *tt = Gamer();
+    printf("%i %i\n", sizer.w, sizer.h);
 
-    SDL_Vertex lists[4] = {{{30, 50}, {0xFF, 0x00, 0x00, 0xFF}, {0, 0}},
-                            {{800, 50}, {0x00, 0x00, 0xFF, 0xFF}, {1, 0}},
-                            {{50, 130}, {0xFF, 0x00, 0x00, 0xFF}, {0, 1}},
-                            {{800, 100}, {0x00, 0x00, 0xFF, 0xFF}, {1, 1}}};
+    SDL_Vertex lists[4] = {
+        {{200, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 0}},
+        {{400, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 0}},
+        {{200, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 1}},
+        {{400, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 1}}
+    };
     while (loop)
     {
-        //printf("%s\n", SDL_GetError());
-        SetLocation(NULL, TOP_RIGHT);
 #ifndef UNLIMITED_FPS
         time = SDL_GetTicks();
 #endif // UNLIMITED_FPS
         SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(GameRenderer);
+        unsigned int turnAdvance = (turn == PLAYER) && (selection != NO_ACTION);
         while (SDL_PollEvent(&e))
         {
             if (e.type == SDL_QUIT)
             {
                 loop = 0;
+                break;
             }
-            // TODO: Fix this, it's sloppy as fuck
-            if (e.type == SDL_MOUSEBUTTONDOWN && turn == PLAYER && selection != NO_ACTION && ButtonCheck(button, &e))
+            if (e.type == SDL_MOUSEBUTTONDOWN) // All mouse events
             {
-                flags.switchTurn = 1;
+                if (turnAdvance && ButtonCheck(button, &e))
+                    flags.switchTurn = 1;
             }
             if (e.type == SDL_KEYDOWN)
             {
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
                         selection = TURNRIGHT;
                         break;
                     case SDL_SCANCODE_SPACE:
-                        flags.switchTurn = (turn == PLAYER) && (selection != NO_ACTION);
+                        flags.switchTurn = turnAdvance;
                         break;
                     case SDL_SCANCODE_O:
                         GameField.spacing++;
@@ -279,19 +279,9 @@ int main(int argc, char **argv)
 
         int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
-        //SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
+        SDL_RenderGeometry(GameRenderer, tt, lists, 4, rs, 6);
 
         DebugDisplayDraw();
-        /*
-        {
-            SDL_Rect turnRect;
-            SDL_Texture *turnText = FontRenderTextSize(GameRenderer, turnNames[turn], 15, &turnRect);
-            SetLocation(&turnRect, TOP_RIGHT);
-            SDL_SetTextureColorMod(turnText, 0xFF, 0x00, 0x00);
-            SDL_RenderCopy(GameRenderer, turnText, NULL, &turnRect);
-            SDL_DestroyTexture(turnText);
-        }
-        */
 
         // End of frame stuff
         SDL_RenderPresent(GameRenderer);

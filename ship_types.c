@@ -3,6 +3,7 @@
 #include "draw.h"
 #include "misc.h"
 #include "player.h"
+#include "ship_data.h"
 
 // TODO: Make logger with freopen() on stderr
 
@@ -15,15 +16,15 @@ struct ShipData
     const ShipActionFunc action;
     const ShipFreeFunc free;
     const ShipDrawFunc draw;
-    const char *filename; // TODO: Replace this with the appropriate function call when you do the greyscale thing
+    ShipDataFunc imageData;
     SDL_Texture *texture;
 };
 
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NULL, NULL}, // None ship
-    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  NULL, NULL}, // Circle ship
-    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  NULL, NULL}, // Player ship
-    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    NULL, NULL}  // Generic Bullet
+    {CreateNoneShip,   NoneShip,      FreeShip,       DrawBlankShip, NoneImageData, NULL}, // None ship
+    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType,  CircleImageData, NULL}, // Circle ship
+    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType,  PlayerImageData, NULL}, // Player ship
+    {CreateBullet,     GenericBullet, FreeBullet,     DrawBullet,    BulletImageData, NULL}  // Generic Bullet
 };
 
 /* TODO: Get this thing to work
@@ -38,16 +39,22 @@ ShipsData[BULLET]    = {GenericBullet, FreeBullet,     DrawBullet,    NULL,     
 
 static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
 {
-    const char *name = ShipsData[index].filename;
-    if (name)
+    struct ShipImageData *data = ShipsData[index].imageData();
+    if (data)
     {
-        // TODO: Change all of this when the greyscale thing comes true
         if (ShipsData[index].texture)
+        {
             SDL_DestroyTexture(ShipsData[index].texture);
-        SDL_Surface *surf = SDL_LoadBMP(name);
+            ShipsData[index].texture = NULL;
+        }
+        uint32_t *pixels = Uint8PixelsToUint32Pixels(data.pixels, data.width, data.height);
+        // TODO: Look into these masks being #defined somewhere
+        SDL_Surface *surf = SDL_CreateRGBSurfaceFrom(pixels, data.width, data.height,
+                                                     sizeof(uint32_t), sizeof(uint32_t) * data.width,
+                                                     0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF00000000);
         if (surf)
         {
-            SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0xFF, 0xFF, 0xFF));
+            SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0x00, 0x00, 0x00));
             ShipsData[index].texture = SDL_CreateTextureFromSurface(renderer, surf);
             SDL_SetTextureBlendMode(ShipsData[index].texture, SDL_BLENDMODE_BLEND);
         }
@@ -56,6 +63,7 @@ static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
             // TODO: Log something about it somewhere
         }
         SDL_FreeSurface(surf);
+        free(pixels);
     }
 }
 
@@ -130,7 +138,8 @@ Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing)
     return CreateGenericShip(x, y, facing);
 }
 
-Action NoneShip(Ship *ship)
+//Action NoneShip(Ship *ship)
+ShipActionFunc NoneShip
 {
     if (ship->type == NONE_SHIP)
         SDL_Log("NoneShip %p was activated\n", (void*) ship);
@@ -214,7 +223,7 @@ void DrawShipType(Ship *ship)
     SDL_Texture *texture = ShipsData[ship->type].texture;
     if (!texture)
     {
-        if (ShipsData[ship->type].filename)
+        if (ShipsData[ship->type].imageData)
             LoadShipimage(GameRenderer, ship->type);
         DrawBlankShip(ship);
         return;
@@ -258,9 +267,8 @@ SDL_Texture *Gamer()
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
     };
     void *pointer = (void*) Uint8PixelsToUint32Pixels(array, 10, 10);
-    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer,
-                                              10, 10, 32, 4*10, 0x000000FF, 0x0000FF00,
-                                              0x00FF0000, 0xFF000000);
+    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, 10, 10, 32, 4 * 10,
+                                              0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
     SDL_Texture *t = SDL_CreateTextureFromSurface(GameRenderer, s);
     SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
     SDL_FreeSurface(s);

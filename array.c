@@ -1,17 +1,16 @@
 #include "array.h"
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 
 typedef struct Array
 {
     void **array;
-    unsigned int length;
+    size_t length;
     unsigned int size;
 } Array;
 
-Array* ArrayCreate(unsigned int size)
+Array* ArrayCreate(size_t size)
 {
     Array* array = (Array*) calloc(1, sizeof(Array));
     if (array)
@@ -23,12 +22,12 @@ Array* ArrayCreate(unsigned int size)
     return array;
 }
 
-unsigned int ArrayLength(Array *array)
+size_t ArrayLength(Array *array)
 {
     return array ? array->length : 0;
 }
 
-unsigned int ArraySize(Array *array)
+size_t ArraySize(Array *array)
 {
     return array ? array->size : 0;
 }
@@ -52,7 +51,7 @@ void ArrayAnnihilate(Array **array, ArrayFunc clean)
     }
 }
 
-void ArrayInsert(Array *array, unsigned int index, void *data)
+void ArrayInsert(Array *array, size_t index, void *data)
 {
     if (!array)
         return;
@@ -66,7 +65,7 @@ void ArrayInsert(Array *array, unsigned int index, void *data)
     }
 }
 
-static void ArrayAdd(Array *array, unsigned int index, void *data)
+static void ArrayAdd(Array *array, size_t index, void *data)
 {
     if (!array || !data)
         return;
@@ -90,11 +89,11 @@ void ArrayIterate(Array *array, ArrayFunc func)
 {
     if (!array || !func)
         return;
-    for (unsigned int i = 0; i < array->length; i++)
+    for (size_t i = 0; i < array->length; i++)
         func(array->array[i]);
 }
 
-void **ArrayReference(Array *array, unsigned int index)
+void **ArrayReference(Array *array, size_t index)
 {
     if (!array)
         return NULL;
@@ -102,19 +101,19 @@ void **ArrayReference(Array *array, unsigned int index)
 }
 
 // Feel this like could somehow be wrapped into a call to ArrayReference but that might be a bad idea
-void *ArrayElement(Array *array, unsigned int index)
+void *ArrayElement(Array *array, size_t index)
 {
     if (!array)
         return NULL;
     return (void*)array->array[index];
 }
 
-void **ArrayRemove(Array *array, unsigned int index)
+void **ArrayRemove(Array *array, size_t index)
 {
     return ArrayRemoveRange(array, index, index);
 }
 
-void **ArrayRemoveRange(Array *array, unsigned int start, unsigned int end)
+void **ArrayRemoveRange(Array *array, size_t start, size_t end)
 {
     static void **pointers = NULL;
 #ifndef UNSAFE_ARRAYS
@@ -133,7 +132,7 @@ void **ArrayRemoveRange(Array *array, unsigned int start, unsigned int end)
     return pointers;
 }
 
-void ArrayDeleteRange(Array *array, unsigned int start, unsigned int end)
+void ArrayDeleteRange(Array *array, size_t start, size_t end)
 {
     if (array)
     {

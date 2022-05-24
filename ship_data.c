@@ -1,0 +1,30 @@
+#include "ship_data.h"
+
+static const struct ShipImageData _NoneImageData = {
+    1, 1,
+    {0xFF}
+};
+
+static const struct ShipImageData _CircleImageData = {
+    4, 4,
+    {
+        0x00, 0xFF, 0xFF, 0x00,
+        0xFF, 0x80, 0x80, 0xFF,
+        0xFF, 0x80, 0x80, 0xFF,
+        0x00, 0xFF, 0xFF, 0x00
+    }
+};
+
+static const struct ShipImageData _BulletImageData = {
+    4, 4,
+    {
+        0x00, 0x80, 0x80, 0x00,
+        0x80, 0xFF, 0xFF, 0x80,
+        0x80, 0xFF, 0xFF, 0x80,
+        0x00, 0x80, 0x80, 0x00
+    }
+};
+
+ShipImageDataFunction(NoneImageData)
+ShipImageDataFunction(CircleImageData)
+ShipImageDataFunction(BulletImageData)
