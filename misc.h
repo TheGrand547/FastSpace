@@ -3,8 +3,6 @@
 #define MISC_H
 #include <SDL2/SDL.h>
 
-// TODO: Move these
-
 void OutputImage(SDL_Surface *surf);
 
 #endif // MISC_H

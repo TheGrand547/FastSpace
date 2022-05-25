@@ -3,14 +3,17 @@
 #define SHIP_DATA_H
 #include <inttypes.h>
 #define ShipImageDataFunction(name) const struct ShipImageData * name () { return &_##name; }
+#define SHIP_IMAGE_MAX_WIDTH 10
+#define SHIP_IMAGE_MAX_HEIGHT 10
+#define SHIP_IMAGE_MAX_SIZE SHIP_IMAGE_MAX_WIDTH * SHIP_IMAGE_MAX_HEIGHT
 
 struct ShipImageData
 {
     const uint32_t width, height;
-    const uint8_t pixels[100]; // TODO: Make this some kind of constant, very cringe this exists
+    const uint8_t pixels[SHIP_IMAGE_MAX_SIZE];
 };
 
-typedef const struct ShipImageData *(*const ShipDataFunc)();
+typedef const struct ShipImageData *(*ShipDataFunc)();
 
 const struct ShipImageData *NoneImageData();
 const struct ShipImageData *CircleImageData();

@@ -1,6 +1,16 @@
 #include "field.h"
 #include "super_header.h"
 
+SDL_Rect GetTile(uint8_t x, uint8_t y)
+{
+    SDL_Rect rect = {GameField.basePointX + x *
+                    (GameField.rectWidth + GameField.spacing),
+                     GameField.basePointX + y *
+                    (GameField.rectHeight + GameField.spacing),
+                     GameField.rectWidth, GameField.rectHeight};
+    return rect;
+}
+
 unsigned int WindowSizeX()
 {
     return GameField.width * (GameField.rectWidth + GameField.spacing) - GameField.spacing + 200;

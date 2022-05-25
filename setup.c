@@ -12,7 +12,7 @@ int InitializeLibraries()
                                   WindowSizeX(), WindowSizeY(), SDL_WINDOW_FLAGS);
         GameRenderer = SDL_CreateRenderer(GameWindow, -1, RENDERER_FLAGS);
         result = !GameWindow && !GameRenderer && !FontInit();
-        SDL_Surface *image = NULL; // TODO: Put create a proper logo
+        SDL_Surface *image = NULL; // TODO: Create a proper logo
         if (image)
             SDL_SetWindowIcon(GameWindow, image);
         SDL_FreeSurface(image);

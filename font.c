@@ -199,7 +199,7 @@ static int LoadCharacter(unsigned char index)
     uint32_t *pointer = DataToPixelArray(CompressedFontData[(int) index]);
     SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
                                               R_MASK, G_MASK, B_MASK, A_MASK);
-    SDL_SetColorKey(s, SDL_TRUE, 0x00000000);
+    SDL_SetColorKey(s, SDL_TRUE, A_MASK); // Black = transparent
     CharDataPointers[(int) index] = pointer;
     CharSurfaces[(int) index] = s;
     CharTextures[(int) index] = NULL;
@@ -342,7 +342,7 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
     {
         SDL_Rect dimension = {0, 0, width, height};
         SDL_Surface *s;
-        SDL_SetColorKey(surf, SDL_TRUE, 0x00000000);
+        SDL_SetColorKey(surf, SDL_TRUE, A_MASK);
         for (; *string; string++)
         {
             if (*string == '\n')

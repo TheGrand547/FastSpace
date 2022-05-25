@@ -13,6 +13,18 @@
 #define NULL_CHECK(x) if (!x) return;
 #define NULL_CHECK_RETURN(x, ret) if (!x) return ret;
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define R_MASK 0xFF000000
+#define G_MASK 0x00FF0000
+#define B_MASK 0x0000FF00
+#define A_MASK 0x000000FF
+#else // Little endian
+#define R_MASK 0x000000FF
+#define G_MASK 0x0000FF00
+#define B_MASK 0x00FF0000
+#define A_MASK 0xFF000000
+#endif // SDL_BYTEORDER
+
 typedef enum
 {
     UP, RIGHT, DOWN, LEFT

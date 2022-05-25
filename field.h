@@ -11,6 +11,8 @@ typedef struct
     uint8_t spacing;
 } Field;
 
+SDL_Rect GetTile(uint8_t x, uint8_t y);
+
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 

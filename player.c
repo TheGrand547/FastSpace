@@ -28,10 +28,11 @@ Ship *CreatePlayer(uint8_t x, uint8_t y, Facing facing)
 
 void FreePlayerShip(Ship *ship)
 {
-    free(ship);
+    // Clean up user struct
+    FreeShip(ship);
 }
 
-Action PlayerShip(Ship *ship)
+Action ActivatePlayer(Ship *ship)
 {
     UNUSED(ship);
     // TODO: Log this

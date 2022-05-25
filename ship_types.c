@@ -7,9 +7,8 @@
 
 // TODO: Make logger with freopen() on stderr
 
-static SDL_Rect GetDrawArea(Ship *ship);
+static void DrawShipType(Ship *ship);
 
-// TOOD: Add creation functions, and such
 struct ShipData
 {
     const ShipCreateFunc create;
@@ -21,21 +20,13 @@ struct ShipData
 };
 
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {CreateNoneShip,   NoneShip,      FreeShip,       DrawShipType, NoneImageData, NULL}, // None ship
-    {CreateCircleShip, CircleShip,    FreeCircleShip, DrawShipType, CircleImageData, NULL}, // Circle ship
-    {CreatePlayer,     PlayerShip,    FreePlayerShip, DrawShipType, PlayerImageData, NULL}, // Player ship
-    {CreateBullet,     GenericBullet, FreeBullet,     DrawShipType, BulletImageData, NULL}  // Generic Bullet
+    {CreateNoneShip,   ActivateNoneShip,   FreeShip,       DrawShipType, NoneImageData, NULL}, // None ship
+    {CreateCircleShip, ActivateCircleShip, FreeCircleShip, DrawShipType, CircleImageData, NULL}, // Circle ship
+    {CreatePlayer,     ActivatePlayer,     FreePlayerShip, DrawShipType, PlayerImageData, NULL}, // Player ship
+    {CreateBullet,     ActivateBullet,     FreeBullet,     DrawShipType, BulletImageData, NULL}  // Generic Bullet
 };
 
-/* TODO: Get this thing to work
-ShipsData[NONE_SHIP] = {NoneShip,      FreeShip,       DrawBlankShip, NULL,       NULL};
-ShipsData[CIRCLE]    = {CircleShip,    FreeCircleShip, DrawShipType,  "ship.bmp", NULL};
-ShipsData[PLAYER]    = {PlayerShip,    FreePlayerShip, DrawShipType,  NULL,       NULL};
-ShipsData[BULLET]    = {GenericBullet, FreeBullet,     DrawBullet,    NULL,       NULL};
-*/
-
 #define NUM_SHIP_TYPES LAST_SHIP
-
 
 static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
 {
@@ -48,10 +39,9 @@ static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
             ShipsData[index].texture = NULL;
         }
         uint32_t *pixels = Uint8PixelsToUint32Pixels(data->pixels, data->width, data->height);
-        // TODO: Look into these masks being #defined somewhere
         SDL_Surface *surf = SDL_CreateRGBSurfaceFrom(pixels, data->width, data->height,
                                                      sizeof(uint32_t) * 8, sizeof(uint32_t) * data->width,
-                                                     0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+                                                     R_MASK, G_MASK, B_MASK, A_MASK);
         if (surf)
         {
             SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format, 0x00, 0x00, 0x00));
@@ -117,7 +107,6 @@ void CleanupShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
-    SDL_Log("%p Destroyed\n", (void*) ship);
     if (ship)
         ShipsData[ship->type].free(ship);
 }
@@ -138,7 +127,7 @@ Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing)
     return CreateGenericShip(x, y, facing);
 }
 
-Action NoneShip(Ship *ship)
+Action ActivateNoneShip(Ship *ship)
 {
     if (ship->type == NONE_SHIP)
         SDL_Log("NoneShip %p was activated\n", (void*) ship);
@@ -150,12 +139,12 @@ void FreeShip(Ship *ship)
     NULL_CHECK(ship);
     if (ship->data)
         fprintf(stderr, "Non-null pointer %p leaked\n", ship->data); // TODO: Logger
-    free(ship);
+    DestroyShip(ship);
 }
 
 void DrawBlankShip(Ship *ship)
 {
-    SDL_Rect rect = GetDrawArea(ship);
+    SDL_Rect rect = GetTile(ship->x, ship->y);
     SDL_SetRenderDrawColor(GameRenderer, ship->color.r,
                            ship->color.g, ship->color.b, ship->color.a);
     SDL_RenderFillRect(GameRenderer, &rect);
@@ -175,7 +164,7 @@ Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing)
     return ship;
 }
 
-Action CircleShip(Ship *ship)
+Action ActivateCircleShip(Ship *ship)
 {
     Action value = TURNRIGHT;
     if (ship->counter)
@@ -199,7 +188,7 @@ Ship *CreateBullet(uint8_t x, uint8_t y, Facing facing)
     return bullet;
 }
 
-Action GenericBullet(Ship *ship)
+Action ActivateBullet(Ship *ship)
 {
     if (!ship->counter)
         ship->counter = 1;
@@ -216,15 +205,14 @@ void DrawBullet(Ship *ship)
 
 //** Internal Drawing Methods **//
 
-void DrawShipType(Ship *ship)
+static void DrawShipType(Ship *ship)
 {
-    SDL_Rect rect = GetDrawArea(ship);
+    SDL_Rect rect = GetTile(ship->x, ship->y);
     SDL_Texture *texture = ShipsData[ship->type].texture;
     if (!texture)
     {
         if (ShipsData[ship->type].imageData)
             LoadShipimage(GameRenderer, ship->type);
-        //printf("After load: %p\n", ShipsData[ship->type].texture);
         DrawBlankShip(ship);
         return;
     }
@@ -240,40 +228,3 @@ void DrawShipType(Ship *ship)
     SDL_SetTextureColorMod(texture, ship->color.r, ship->color.g, ship->color.b);
     SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
 }
-
-static SDL_Rect GetDrawArea(Ship *ship)
-{
-    // This feels astonishingly sloopy, but i'm not sure what this is
-    SDL_Rect rect = {GameField.basePointX + ship->x *
-                    (GameField.rectWidth + GameField.spacing),
-                     GameField.basePointX + ship->y *
-                    (GameField.rectHeight + GameField.spacing),
-                     GameField.rectWidth, GameField.rectHeight};
-    return rect;
-}
-
-SDL_Texture *Gamer()
-{
-    uint8_t array[10 * 10] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0x00, 0x00, 0x80, 0x80, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0x00, 0x8F, 0xFF, 0x00, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0x00, 0x80, 0x00, 0x00, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0xFF, 0xFF, 0x8F, 0x8F, 0x8F, 0xFF, 0x00, 0xFF,
-        0xFF, 0x00, 0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    };
-    void *pointer = (void*) Uint8PixelsToUint32Pixels(array, 10, 10);
-    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, 10, 10, 32, 4 * 10,
-                                              0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-    SDL_Texture *t = SDL_CreateTextureFromSurface(GameRenderer, s);
-    SDL_SetTextureColorMod(t, 0xFF, 0x00, 0x00);
-    SDL_FreeSurface(s);
-    free(pointer);
-    return t;
-}
-
-

@@ -36,7 +36,8 @@ static struct
     const Uint16 turnDelay;
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
-static Array *bullets;
+static Array *badBullets;
+static Array *goodBullets;
 
 int main(int argc, char **argv)
 {
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
     player->type = USER;
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
-    bullets = ArrayNew();
+    badBullets = ArrayNew();
 
     printf("player\n");
     ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
                         Ship *bullet = CreateGenericShip(1, 6, RIGHT);
                         bullet->type = BULLET;
                         ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
-                        ArrayAppend(bullets, bullet);
+                        ArrayAppend(badBullets, bullet);
                         break;
                     }
                     case SDL_SCANCODE_A:
@@ -208,31 +209,31 @@ int main(int argc, char **argv)
             {
                 if (turnIndex < ArrayLength(ships))
                 {
-                    s = ArrayElement(ships, turnIndex);
+                    s = (Ship*) ArrayElement(ships, turnIndex);
                     ActivateShip(s); // Wowie it's ai time
-                    // TODO: Maybe verify they're not in the same tile as something else
+                    // TODO: Ensure no invalid ships remain
                     turnIndex++;
                     turnTimer = SDL_GetTicks();
                 }
                 else
                 {
-                    ArrayIterate(bullets, ActivateShip);
-                    for (unsigned int i = 0; i < ArrayLength(bullets); i++)
+                    ArrayIterate(badBullets, ActivateShip);
+                    for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
                     {
-                        s = (Ship*) ArrayElement(bullets, i);
+                        s = (Ship*) ArrayElement(badBullets, i);
                         int collision = 0;
                         if (!s)
                             break;
                         if (s->x > GameField.width || s->y > GameField.height)
                         {
                             printf("%p is out of bounds\n", (void*) s);
-                            CleanupShip(*ArrayRemove(bullets, i));
+                            CleanupShip(*ArrayRemove(badBullets, i));
                             i--;
                             continue;
                         }
-                        for (unsigned int j = i + 1; j < ArrayLength(bullets); j++)
+                        for (unsigned int j = i + 1; j < ArrayLength(badBullets); j++)
                         {
-                            Ship *s2 = (Ship*) ArrayElement(bullets, j);
+                            Ship *s2 = (Ship*) ArrayElement(badBullets, j);
                             if (s != s2)
                             {
                                 SDL_Point p = {s->x, s->y};
@@ -240,14 +241,14 @@ int main(int argc, char **argv)
                                 if (p.x == p2.x && p.y == p2.y)
                                 {
                                     collision = 1;
-                                    CleanupShip(*ArrayRemove(bullets, j));
+                                    CleanupShip(*ArrayRemove(badBullets, j));
                                     j--;
                                 }
                             }
                         }
                         if (collision)
                         {
-                            CleanupShip(*ArrayRemove(bullets, i));
+                            CleanupShip(*ArrayRemove(badBullets, i));
                             i--;
                         }
                     }
@@ -273,7 +274,7 @@ int main(int argc, char **argv)
         DrawField(&GameField);
         DrawShip(player);
         ArrayIterate(ships, DrawShip);
-        ArrayIterate(bullets, DrawShip);
+        ArrayIterate(badBullets, DrawShip);
         DrawButton(button);
 
         int rs[] = {0, 1, 2, 2, 1, 3};
@@ -289,11 +290,10 @@ int main(int argc, char **argv)
             SDL_Delay(FPS_LIMIT_RATE);
 #endif // UNLIMITED_FPS
     }
-    printf("IN THE CLEAR\n");
     FreeShipImages();
     CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);
-    ArrayAnnihilate(&bullets, CleanupShip);
+    ArrayAnnihilate(&badBullets, CleanupShip);
     return 0;
 }
 
@@ -303,5 +303,5 @@ void ShootGamer(Ship *ship)
 {
     Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);
     ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
-    ArrayAppend(bullets, bullet);
+    ArrayAppend(badBullets, bullet);
 }

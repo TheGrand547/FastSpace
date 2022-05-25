@@ -18,7 +18,6 @@ typedef enum
 void LoadShipImages();
 void FreeShipImages();
 
-// TODO: Rename ship action functions
 typedef Ship *(*ShipCreateFunc)(uint8_t x, uint8_t y, Facing facing);
 typedef Action (*ShipActionFunc)(Ship *ship); // Can assume ship will always be non-NULL
 typedef void (*ShipFreeFunc)(Ship *ship);
@@ -31,32 +30,27 @@ void ActivateShip(void *data);
 void CleanupShip(void *data);
 void DrawShip(void *data);
 
-// Internal way of drawing a specific ship with a defined SDL_Texture in the map
-// TODO: Determine if this should be static
-void DrawShipType(Ship *ship);
-
 //** Ship Function Map Declarations **//
 
 /** None Ship **/
 Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing);
-Action NoneShip(Ship *ship);
+Action ActivateNoneShip(Ship *ship);
 void FreeShip(Ship *ship);
 void DrawBlankShip(Ship *ship);
 
 /** Circle Ship **/
 Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing);
-Action CircleShip(Ship *ship);
+Action ActivateCircleShip(Ship *ship);
 #define FreeCircleShip FreeShip
 #define DrawCircleShip DrawShipType
 
 /** Generic Bullet **/
 Ship *CreateBullet(uint8_t, uint8_t y, Facing facing);
-Action GenericBullet(Ship *ship);
+Action ActivateBullet(Ship *ship);
 #define FreeBullet FreeShip
 void DrawBullet(Ship *ship);
 
-// TODO: GET RID OF THESE USELESS THINGS
-SDL_Texture *Gamer();
+// Temporary testing stuff
 void ShootGamer(Ship *ship);
 
 #endif // SHIP_TYPES_H

@@ -27,8 +27,7 @@ typedef struct __ship
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);
 
-// TODO: Determine if this can me made to Ship*
-void MoveShip(void *data);
+void MoveShip(Ship *ship);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
 
