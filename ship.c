@@ -29,9 +29,8 @@ int FacingY(Facing facing)
 
 void DestroyShip(Ship *ship)
 {
-    printf("%p Destroyed: %u\n", (void*) ship, shipCount);
+    printf("%p Destroyed: %u\n", (void*) ship, shipCount--);
     free(ship);
-    shipCount--;
 }
 
 void MoveShip(Ship *ship)

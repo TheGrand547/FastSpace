@@ -197,7 +197,7 @@ static int LoadCharacter(unsigned char index)
     if (CharSurfaces[(int) index])
         return 0;
     uint32_t *pointer = DataToPixelArray(CompressedFontData[(int) index]);
-    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, 4 * CHAR_W,
+    SDL_Surface *s = SDL_CreateRGBSurfaceFrom(pointer, CHAR_W, CHAR_H, 32, sizeof(uint32_t) * CHAR_W,
                                               R_MASK, G_MASK, B_MASK, A_MASK);
     SDL_SetColorKey(s, SDL_TRUE, A_MASK); // Black = transparent
     CharDataPointers[(int) index] = pointer;
@@ -252,7 +252,7 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
 {
     SDL_Point size = {0, 0};
     const int length = modifiedStrlen(string);
-    if (memchr(string, '\n', strlen(string)))
+    if (strchr(string, '\n'))
     {
         char *buffer = strdup(string);
         char *delimited = strtok(buffer, "\n");
@@ -345,18 +345,19 @@ SDL_Texture *FontRenderTextSize(SDL_Renderer *renderer, const char *string, size
         SDL_SetColorKey(surf, SDL_TRUE, A_MASK);
         for (; *string; string++)
         {
-            if (*string == '\n')
+            char current = *string;
+            if (current == '\n')
             {
                 dimension.y += heightDelta;
                 dimension.x = 0;
                 continue;
             }
-            if (*string == '\t')
+            if (current == '\t')
             {
                 dimension.x += widthDelta * tabWidth;
                 continue;
             }
-            s = CharSurface(*string);
+            s = CharSurface(current);
             if (s)
                 SDL_BlitScaled(s, NULL, surf, &dimension);
             dimension.x += widthDelta;
@@ -385,22 +386,30 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
     char *newstring = calloc(2 * len, sizeof(char));
     size_t index = 0;
 
+    // Split the input into chunks that cannot be separated, based on white space
     char **datum = StrSplit(string, " ");
     for (unsigned int i = 0; datum[i]; i++)
     {
         char *current = datum[i];
         const size_t subSize = FontGetTextSize(current, size).x;
         const size_t subLen = strlen(current);
-        if ((currentWidth + subSize >= maxWidth) | !!strstr(current, "\n"))
+        const char *newline = strstr(current, "\n");
+        if ((currentWidth + subSize >= maxWidth))
         {
             currentWidth = 0;
+            if (index > 0)
+                index--; // Remove previous space
             newstring[index++] = '\n';
         }
         currentWidth += subSize + xDelta;
         strcpy(newstring + index, current);
         index += subLen;
-        newstring[index++] = ' ';
+        if (!newline)
+            newstring[index++] = ' ';
+        else
+            currentWidth = 0;
     }
+    newstring[index - 1] = 0; // Null terminate
     StrSplitCleanup(datum);
     newstring = realloc(newstring, index);
     SDL_Texture *result = FontRenderTextSize(renderer, newstring, size, rect);

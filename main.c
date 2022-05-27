@@ -90,10 +90,11 @@ int main(int argc, char **argv)
     EnableDebugDisplay(SHOW_COUNTDOWN, TOP_RIGHT, NULL);
 
     LoadShipImages(); // HACKY
-    const char *message = "awww yeah text wrapping what a gamer";
+
+
+    const char *message = "twofewafewfweafewfweafewfwea\nlines";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
-    // TODO: Oh god i broke text wrapping
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
     printf("%i %i\n", sizer.w, sizer.h);
@@ -281,6 +282,8 @@ int main(int argc, char **argv)
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
         SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
 
+        SDL_RenderDrawLine(GameRenderer, 300, 0, 300, 300);
+
         DebugDisplayDraw();
 
         // End of frame stuff
@@ -294,6 +297,7 @@ int main(int argc, char **argv)
     CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);
     ArrayAnnihilate(&badBullets, CleanupShip);
+    DestroyShip(player);
     return 0;
 }
 
