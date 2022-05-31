@@ -53,9 +53,7 @@ int main(int argc, char **argv)
     SDL_version version;
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
-#ifndef UNLIMITED_FPS
-    uint32_t time;
-#endif // UNLIMITED_FPS
+
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
     player->type = USER;
@@ -73,7 +71,6 @@ int main(int argc, char **argv)
     Turn turn = PLAYER;
     Action selection = NO_ACTION;
     uint32_t turnTimer = 0;
-    unsigned int turnIndex = 0;
 
     // TODO: Move this externally
     struct
@@ -92,7 +89,7 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
 
 
-    const char *message = "twofewafewfweafewfweafewfwea\nlines";
+    const char *message = "here is some text because I am bored";
     printf("MESSAGE: %s\n", message);
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
@@ -107,9 +104,8 @@ int main(int argc, char **argv)
     };
     while (loop)
     {
-#ifndef UNLIMITED_FPS
-        time = SDL_GetTicks();
-#endif // UNLIMITED_FPS
+        const uint32_t frameStartTick = SDL_GetTicks();
+
         SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(GameRenderer);
         unsigned int turnAdvance = (turn == PLAYER) && (selection != NO_ACTION);
@@ -177,84 +173,75 @@ int main(int argc, char **argv)
             }
             if (flags.switchTurn)
             {
+                ActivateShip(player);
                 MoveShip(player);
                 if (selection == TURNRIGHT)
                     TurnRight(player);
                 else if (selection == TURNLEFT)
                     TurnLeft(player);
-                /*
-                else
-                    // Shoot
-                */
+                else if (selection == SHOOT)
+                    ShootGamer(player);
+
                 selection = NO_ACTION;
 
                 // Switch turn
-                turn = AI;
+                turn = AI_BUFFER;
                 turnTimer = SDL_GetTicks();
-                flags.bufferState = 1;
                 flags.switchTurn = 0;
-                turnIndex = 0;
-            }
-            if (flags.bufferState)
-            {
-                flags.bufferState = (SDL_GetTicks() - turnTimer) < userSettings.turnDelay;
-                if (!flags.bufferState)
-                    turnTimer = SDL_GetTicks();
             }
         }
-
+        if (frameStartTick - turnTimer > userSettings.turnDelay)
+        {
+            turnTimer = 0;
+            if (turn == AI_BUFFER)
+                turn = AI;
+            if (turn == PLAYER_BUFFER)
+                turn = PLAYER;
+            if (turn == MISC_BUFFER)
+                turn = MISC;
+        }
         // AI turn handling
         if (turn == AI)
         {
-            if (!flags.bufferState && SDL_GetTicks() - turnTimer > userSettings.turnDelay)
+            turn = PLAYER_BUFFER;
+            turnTimer = frameStartTick;
+
+            ArrayIterate(ships, ActivateShip);      // Activate enemies
+            ArrayIterate(badBullets, ActivateShip); // Activate bullets
+
+            // TODO: Make this not bad
+            for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
-                if (turnIndex < ArrayLength(ships))
+                s = (Ship*) ArrayElement(badBullets, i);
+                int collision = 0;
+                if (!s)
+                    break;
+                if (s->x > GameField.width || s->y > GameField.height)
                 {
-                    s = (Ship*) ArrayElement(ships, turnIndex);
-                    ActivateShip(s); // Wowie it's ai time
-                    // TODO: Ensure no invalid ships remain
-                    turnIndex++;
-                    turnTimer = SDL_GetTicks();
+                    printf("%p is out of bounds\n", (void*) s);
+                    CleanupShip(*ArrayRemove(badBullets, i));
+                    i--;
+                    continue;
                 }
-                else
+                for (unsigned int j = i + 1; j < ArrayLength(badBullets); j++)
                 {
-                    ArrayIterate(badBullets, ActivateShip);
-                    for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
+                    Ship *s2 = (Ship*) ArrayElement(badBullets, j);
+                    if (s != s2)
                     {
-                        s = (Ship*) ArrayElement(badBullets, i);
-                        int collision = 0;
-                        if (!s)
-                            break;
-                        if (s->x > GameField.width || s->y > GameField.height)
+                        SDL_Point p = {s->x, s->y};
+                        SDL_Point p2 = {s2->x, s2->y};
+                        if (p.x == p2.x && p.y == p2.y)
                         {
-                            printf("%p is out of bounds\n", (void*) s);
-                            CleanupShip(*ArrayRemove(badBullets, i));
-                            i--;
-                            continue;
-                        }
-                        for (unsigned int j = i + 1; j < ArrayLength(badBullets); j++)
-                        {
-                            Ship *s2 = (Ship*) ArrayElement(badBullets, j);
-                            if (s != s2)
-                            {
-                                SDL_Point p = {s->x, s->y};
-                                SDL_Point p2 = {s2->x, s2->y};
-                                if (p.x == p2.x && p.y == p2.y)
-                                {
-                                    collision = 1;
-                                    CleanupShip(*ArrayRemove(badBullets, j));
-                                    j--;
-                                }
-                            }
-                        }
-                        if (collision)
-                        {
-                            CleanupShip(*ArrayRemove(badBullets, i));
-                            i--;
+                            collision = 1;
+                            CleanupShip(*ArrayRemove(badBullets, j));
+                            j--;
                         }
                     }
-                    flags.bufferState = 1;
-                    turn = PLAYER;
+                }
+                if (collision)
+                {
+                    CleanupShip(*ArrayRemove(badBullets, i));
+                    i--;
                 }
             }
         }
@@ -289,7 +276,7 @@ int main(int argc, char **argv)
         // End of frame stuff
         SDL_RenderPresent(GameRenderer);
 #ifndef UNLIMITED_FPS
-        if (SDL_GetTicks() - time <= FPS_LIMIT_THRESHOLD)
+        if (SDL_GetTicks() - frameStartTick <= FPS_LIMIT_THRESHOLD)
             SDL_Delay(FPS_LIMIT_RATE);
 #endif // UNLIMITED_FPS
     }

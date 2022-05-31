@@ -394,7 +394,8 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
         const size_t subSize = FontGetTextSize(current, size).x;
         const size_t subLen = strlen(current);
         const char *newline = strstr(current, "\n");
-        if (subSize > maxWidth) // TODO: Some funky things with vertical tabs
+        // Hope that this never happens
+        if (subSize > maxWidth)
             printf("This behavior has not been defined\n");
         if (newline)
         {
@@ -406,11 +407,12 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
                 continue;
             }
             // Otherwise we just trust them to know what they're doing
-            char **currentSplit = StrSplit(current, "\n");
-            char **copy = currentSplit;
-            for (; *copy; copy++);
-            currentWidth = FontGetTextSize(*(copy - 1), size).x;
-            StrSplitCleanup(currentSplit);
+            char *last = strrchr(current, '\n');
+            currentWidth = FontGetTextSize(last, size).x;
+
+            strcpy(newstring + index, current);
+            index += subLen;
+            continue;
         }
         else if ((currentWidth + subSize >= maxWidth) && index > 0)
         {

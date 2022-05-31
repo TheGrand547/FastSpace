@@ -125,7 +125,10 @@ void DrawFpsDisplay()
 /** Turn Timer Stuff **/
 static SDL_Texture *turnTexture = NULL;
 static const Turn *currentTurn = NULL;
-static const char *turnNames[] = {STR(PLAYER), STR(AI), STR(MISC)};
+static const char *turnNames[] = {
+    STR(PLAYER), STR(AI), STR(MISC),
+    STR(PLAYER_BUFFER), STR(AI_BUFFER), STR(MISC_BUFFER)
+};
 
 static void EnableTurnDisplay(void *data)
 {

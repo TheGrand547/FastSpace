@@ -32,7 +32,7 @@ typedef enum
 
 typedef enum
 {
-    PLAYER, AI, MISC
+    PLAYER, AI, MISC, PLAYER_BUFFER, AI_BUFFER, MISC_BUFFER
 } Turn;
 
 typedef SDL_Color Color;
