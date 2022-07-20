@@ -37,7 +37,7 @@ static struct
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
 static Array *badBullets;
-static Array *goodBullets;
+//static Array *goodBullets;
 
 int main(int argc, char **argv)
 {
@@ -88,20 +88,13 @@ int main(int argc, char **argv)
 
     LoadShipImages(); // HACKY
 
-
     const char *message = "here is some text because I am bored";
-    printf("MESSAGE: %s\n", message);
+
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
-    printf("%i %i\n", sizer.w, sizer.h);
+    sizer.x = 300;
 
-    SDL_Vertex lists[4] = {
-        {{600, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 0}},
-        {{800, 200}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 0}},
-        {{600, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {0, 1}},
-        {{800, 400}, {0xFF, 0xFF, 0xFF, 0xFF}, {1, 1}}
-    };
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -145,6 +138,10 @@ int main(int argc, char **argv)
                         selection = TURNRIGHT;
                         break;
                     case SDL_SCANCODE_SPACE:
+                        selection = SHOOT;
+                        break;
+                    case SDL_SCANCODE_RETURN:
+                    case SDL_SCANCODE_RETURN2:
                         flags.switchTurn = turnAdvance;
                         break;
                     case SDL_SCANCODE_O:
@@ -173,7 +170,6 @@ int main(int argc, char **argv)
             }
             if (flags.switchTurn)
             {
-                ActivateShip(player);
                 MoveShip(player);
                 if (selection == TURNRIGHT)
                     TurnRight(player);
@@ -181,7 +177,6 @@ int main(int argc, char **argv)
                     TurnLeft(player);
                 else if (selection == SHOOT)
                     ShootGamer(player);
-
                 selection = NO_ACTION;
 
                 // Switch turn
@@ -210,6 +205,7 @@ int main(int argc, char **argv)
             ArrayIterate(badBullets, ActivateShip); // Activate bullets
 
             // TODO: Make this not bad
+            // There is heap corruption afoot
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
                 s = (Ship*) ArrayElement(badBullets, i);
@@ -233,15 +229,13 @@ int main(int argc, char **argv)
                         if (p.x == p2.x && p.y == p2.y)
                         {
                             collision = 1;
-                            CleanupShip(*ArrayRemove(badBullets, j));
-                            j--;
+                            CleanupShip(*ArrayRemove(badBullets, j--));
                         }
                     }
                 }
                 if (collision)
                 {
-                    CleanupShip(*ArrayRemove(badBullets, i));
-                    i--;
+                    CleanupShip(*ArrayRemove(badBullets, i--));
                 }
             }
         }
@@ -265,12 +259,7 @@ int main(int argc, char **argv)
         ArrayIterate(badBullets, DrawShip);
         DrawButton(button);
 
-        int rs[] = {0, 1, 2, 2, 1, 3};
         SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
-        SDL_RenderGeometry(GameRenderer, t, lists, 4, rs, 6);
-
-        SDL_RenderDrawLine(GameRenderer, 300, 0, 300, 300);
-
         DebugDisplayDraw();
 
         // End of frame stuff

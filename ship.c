@@ -29,7 +29,7 @@ int FacingY(Facing facing)
 
 void DestroyShip(Ship *ship)
 {
-    printf("%p Destroyed: %u\n", (void*) ship, shipCount--);
+    printf("0x%p Destroyed: %u\n", (void*) ship, shipCount--);
     free(ship);
 }
 
@@ -65,7 +65,7 @@ SDL_Point ShipNextTile(Ship *ship)
 Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = (Ship*) calloc(1, sizeof(Ship));
-    printf("%p Created: %u\n", (void*) ship, ++shipCount);
+    printf("0x%p Created: %u\n", (void*) ship, ++shipCount);
     if (!ship)
     {
         fprintf(stderr, "Failure allocating ship.\n");

@@ -127,7 +127,9 @@ void **ArrayRemoveRange(Array *array, size_t start, size_t end)
         memcpy(pointers, array->array + start, index * sizeof(void*));
         pointers[index] = NULL;
     }
-    memmove(array->array + start, array->array + start + index, (array->length - index) * sizeof(void*));
+    // Want to move the last n elements back index number of steps,
+    // where n = len - the last location removed
+    memmove(array->array + start, array->array + start + index, (array->length - end) * sizeof(void*));
     array->length -= index;
     return pointers;
 }

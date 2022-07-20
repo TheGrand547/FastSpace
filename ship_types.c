@@ -134,6 +134,7 @@ Action ActivateNoneShip(Ship *ship)
     return NO_ACTION;
 }
 
+// TODO: Investigate the counter, something fishy is going on
 void FreeShip(Ship *ship)
 {
     NULL_CHECK(ship);
@@ -221,10 +222,11 @@ static void DrawShipType(Ship *ship)
     double angle = 0;
     if (facing == LEFT)
         flip = SDL_FLIP_HORIZONTAL;
+    // Angles are based on screen relative angles
     if (facing == UP)
-        angle = 90;
-    if (facing == DOWN)
         angle = 270;
+    if (facing == DOWN)
+        angle = 90;
     SDL_SetTextureColorMod(texture, ship->color.r, ship->color.g, ship->color.b);
     SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
 }
