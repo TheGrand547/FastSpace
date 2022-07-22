@@ -35,6 +35,9 @@ typedef enum
     PLAYER, AI, MISC, PLAYER_BUFFER, AI_BUFFER, MISC_BUFFER
 } Turn;
 
+#define HIGH 0xFF
+#define MID 0x80
+#define LOW 0x00
 typedef SDL_Color Color;
 
 extern SDL_Renderer *GameRenderer;

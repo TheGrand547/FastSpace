@@ -95,6 +95,9 @@ int main(int argc, char **argv)
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
     sizer.x = 300;
 
+    SDL_Rect rect; // Like with the 's' pointer this is for any generic rectangle that could be needed
+    void *selected_ship = NULL; // Currently selected ship
+
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -111,8 +114,23 @@ int main(int argc, char **argv)
             }
             if (e.type == SDL_MOUSEBUTTONDOWN) // All mouse events
             {
+                // This is a hack
                 if (turnAdvance && ButtonCheck(button, &e))
                     flags.switchTurn = 1;
+                else if (e.button.button == SDL_BUTTON_LEFT)
+                {
+                    SDL_Point mouse_pos = (SDL_Point) {e.button.x, e.button.y};
+                    selected_ship = NULL;
+                    for (size_t i = 0; i < ArrayLength(ships); i++)
+                    {
+                        s = (Ship*) ArrayElement(ships, i);
+                        if (s) {
+                            rect = GetTile(s->x, s->y);
+                            if (SDL_PointInRect(&mouse_pos, &rect))
+                                selected_ship = s;
+                        }
+                    }
+                }
             }
             if (e.type == SDL_KEYDOWN)
             {
@@ -131,11 +149,11 @@ int main(int argc, char **argv)
                     }
                     case SDL_SCANCODE_A:
                     case SDL_SCANCODE_LEFT:
-                        selection = TURNLEFT;
+                        selection = TURN_LEFT;
                         break;
                     case SDL_SCANCODE_D:
                     case SDL_SCANCODE_RIGHT:
-                        selection = TURNRIGHT;
+                        selection = TURN_RIGHT;
                         break;
                     case SDL_SCANCODE_SPACE:
                         selection = SHOOT;
@@ -171,9 +189,9 @@ int main(int argc, char **argv)
             if (flags.switchTurn)
             {
                 MoveShip(player);
-                if (selection == TURNRIGHT)
+                if (selection == TURN_RIGHT)
                     TurnRight(player);
-                else if (selection == TURNLEFT)
+                else if (selection == TURN_LEFT)
                     TurnLeft(player);
                 else if (selection == SHOOT)
                     ShootGamer(player);
@@ -251,6 +269,12 @@ int main(int argc, char **argv)
                     SDL_Point point = ShipNextTile(s);
                     OutlineTile(point.x, point.y);
                 }
+            }
+            if ((s = ArrayFind(ships, selected_ship)))
+            {
+                // TODO: Also display information about the ship
+                SDL_SetRenderDrawColor(GameRenderer, 0xFF, 0xFF, 0x00, 0xFF);
+                OutlineTileBufferColor(s->x, s->y);
             }
         }
         DrawField(&GameField);

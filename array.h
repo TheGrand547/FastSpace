@@ -25,5 +25,6 @@ void **ArrayRemove(Array *array, size_t index);
 void *ArrayPop(Array *array);
 void **ArrayRemoveRange(Array *array, size_t start, size_t end);
 void *ArrayElement(Array *array, size_t index);
+void *ArrayFind(Array *array, void *element);
 void ArrayIterate(Array *array, ArrayFunc func);
 #endif // ARRAY_H

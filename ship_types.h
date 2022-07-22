@@ -5,7 +5,7 @@
 
 typedef enum
 {
-    TURNLEFT, TURNRIGHT, NO_ACTION, SHOOT
+    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION
     // Arbitrarily many others
 } Action;
 
@@ -23,7 +23,6 @@ typedef Action (*ShipActionFunc)(Ship *ship); // Can assume ship will always be 
 typedef void (*ShipFreeFunc)(Ship *ship);
 typedef void (*ShipDrawFunc)(Ship *ship);
 typedef void (*ShipFunc)(Ship *ship);
-
 
 /** Generic Activation Functions **/
 void ActivateShip(void *data);

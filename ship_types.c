@@ -92,11 +92,14 @@ void ActivateShip(void *data)
             ShootGamer(ship); // TODO: fix this hack thingy
             break;
         }
-        case TURNLEFT:
+        case TURN_LEFT:
             TurnLeft(ship);
             break;
-        case TURNRIGHT:
+        case TURN_RIGHT:
             TurnRight(ship);
+            break;
+        case NO_ACTION:
+            printf("Ship %p returned an invalid action result.\n", data);
             break;
         default:
             break;
@@ -167,7 +170,7 @@ Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing)
 
 Action ActivateCircleShip(Ship *ship)
 {
-    Action value = TURNRIGHT;
+    Action value = TURN_RIGHT;
     if (ship->counter)
     {
         ship->counter--;

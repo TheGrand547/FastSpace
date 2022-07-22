@@ -156,6 +156,20 @@ void *ArrayPop(Array *array)
     return value;
 }
 
+void *ArrayFind(Array *array, void *element)
+{
+    if (!array || !element)
+        return NULL;
+    size_t size = array->length;
+    if (size > 0) {
+        for (size_t index = 0; index < size; index++) {
+            if (array->array[index] == element)
+                return element;
+        }
+    }
+    return NULL;
+}
+
 void ArrayDelete(Array *array, void *data)
 {
     if (!array || !data)

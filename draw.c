@@ -24,7 +24,7 @@ void DrawArrow(uint8_t x, uint8_t y, uint8_t facing)
     SDL_RenderGeometry(renderer, NULL, points, 3, NULL, 0);
 }
 
-void OutlineTile(uint8_t x, uint8_t y)
+void OutlineTileBufferColor(uint8_t x, uint8_t y)
 {
     SDL_Renderer *renderer = GameRenderer;
     if (x >= GameField.width || y >= GameField.height)
@@ -34,8 +34,13 @@ void OutlineTile(uint8_t x, uint8_t y)
     const uint8_t s = GameField.spacing;
     SDL_Rect rect = {GameField.basePointX + x * (w + s) - s,
                      GameField.basePointY + y * (h + s) - s, w + 2 * s, h + 2 * s};
-    SDL_SetRenderDrawColor(renderer, 0x00, 0x80, 0x80, 0xFF);
     SDL_RenderFillRect(renderer, &rect);
+}
+
+void OutlineTile(uint8_t x, uint8_t y)
+{
+    SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x80, 0x80, 0xFF);
+    OutlineTileBufferColor(x, y);
 }
 
 uint32_t *Uint8PixelsToUint32Pixels(const uint8_t *pointer, size_t width, size_t height)
