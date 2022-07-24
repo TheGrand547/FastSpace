@@ -97,6 +97,8 @@ int main(int argc, char **argv)
 
     SDL_Rect rect; // Like with the 's' pointer this is for any generic rectangle that could be needed
     void *selected_ship = NULL; // Currently selected ship
+    SDL_Texture *selected_texture = NULL;
+    SDL_Rect selected_rect;
 
     while (loop)
     {
@@ -127,7 +129,12 @@ int main(int argc, char **argv)
                         if (s) {
                             rect = GetTile(s->x, s->y);
                             if (SDL_PointInRect(&mouse_pos, &rect))
+                            {
                                 selected_ship = s;
+                                if (selected_texture)
+                                    SDL_DestroyTexture(selected_texture);
+                                selected_texture = NULL;
+                            }
                         }
                     }
                 }
@@ -275,8 +282,20 @@ int main(int argc, char **argv)
                 // TODO: Also display information about the ship
                 SDL_SetRenderDrawColor(GameRenderer, 0xFF, 0xFF, 0x00, 0xFF);
                 OutlineTileBufferColor(s->x, s->y);
+                if (!selected_texture)
+                {
+                    char buffer[100];
+                    // TODO: This is garbage
+                    sprintf(buffer, "Location:%8Xz\nFacing: ----\nOther stuff", (size_t) s);
+                    selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
+                    selected_rect.x = WindowSizeX() - selected_rect.w;
+                    selected_rect.y = 200;
+                    SDL_SetTextureColorMod(selected_texture, 0xFF, 0x00, 0x00);
+                }
+                SDL_RenderCopy(GameRenderer, selected_texture, NULL, &selected_rect);
             }
         }
+        // TODO: Clean up misc stuff
         DrawField(&GameField);
         DrawShip(player);
         ArrayIterate(ships, DrawShip);
@@ -306,6 +325,7 @@ int main(int argc, char **argv)
 void ShootGamer(Ship *ship)
 {
     Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);
+    NULL_CHECK(bullet);
     ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
     ArrayAppend(badBullets, bullet);
 }

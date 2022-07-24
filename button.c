@@ -1,4 +1,5 @@
 #include "button.h"
+#include <SDL2/SDL.h>
 
 Button *ButtonCreate(SDL_Rect rect, ButtonFunc func)
 {

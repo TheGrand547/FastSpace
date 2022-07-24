@@ -1,7 +1,8 @@
 #pragma once
 #ifndef GRAND_FONT_H
 #define GRAND_FONT_H
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rect.h>
 
 char **StrSplit(const char *string, const char *delimiters);
 void StrSplitCleanup(char **strings);

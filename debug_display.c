@@ -109,7 +109,8 @@ void DrawFpsDisplay()
     if (difference > FPS_MS_UPDATE_FREQ)
     {
         fps = counted / (FPS_MS_UPDATE_FREQ * 0.001f);
-        SDL_DestroyTexture(fpsTexture);
+        if (fpsTexture)
+            SDL_DestroyTexture(fpsTexture);
         sprintf(fpsText, "FPS: %4.0lf", fps);
         fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
         SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
@@ -117,7 +118,8 @@ void DrawFpsDisplay()
         counted = 0;
     }
     SetLocation(&fpsRect, DisplaysPlace[EnumToIndex(SHOW_FPS)]);
-    SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
+    if (fpsTexture)
+        SDL_RenderCopy(GameRenderer, fpsTexture, NULL, &fpsRect);
     counted++;
 }
 

@@ -1,7 +1,8 @@
 #pragma once
 #ifndef BUTTON_H
 #define BUTTON_H
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_rect.h>
 #include "super_header.h"
 
 typedef void (*ButtonFunc)();

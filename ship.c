@@ -1,6 +1,6 @@
 #include "ship.h"
-
 #include <stdio.h>
+#include <stdlib.h>
 #include "draw.h"
 #include "player.h"
 #include "ship_types.h"
@@ -64,15 +64,20 @@ SDL_Point ShipNextTile(Ship *ship)
 
 Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
 {
+    if (x > GameField.width || y > GameField.height)
+    {
+        fprintf(stderr, "Attempting to create a ship at (%u, %u), out of bounds\n", x, y);
+        return NULL;
+    }
     Ship *ship = (Ship*) calloc(1, sizeof(Ship));
     printf("0x%p Created: %u\n", (void*) ship, ++shipCount);
     if (!ship)
     {
-        fprintf(stderr, "Failure allocating ship.\n");
+        fprintf(stderr, "Failure allocating ship.\n"); // TODO: Log
         shipCount--;
         return NULL;
     }
     *ship = (Ship) {x, y, facing, NONE_SHIP, 0,
-                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL};
+                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL, NULL};
     return ship;
 }

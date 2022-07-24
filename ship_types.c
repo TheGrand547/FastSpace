@@ -1,5 +1,7 @@
 #include "ship_types.h"
+#include <SDL2/SDL_log.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "draw.h"
 #include "misc.h"
 #include "player.h"
@@ -92,15 +94,27 @@ void ActivateShip(void *data)
             ShootGamer(ship); // TODO: fix this hack thingy
             break;
         }
-        case TURN_LEFT:
+        case TURN_AROUND: // Intentional fallthrough to double turn
+        {
+            TurnLeft(ship);
             TurnLeft(ship);
             break;
+        }
+        case TURN_LEFT:
+        {
+            TurnLeft(ship);
+            break;
+        }
         case TURN_RIGHT:
+        {
             TurnRight(ship);
             break;
+        }
         case NO_ACTION:
+        {
             printf("Ship %p returned an invalid action result.\n", data);
             break;
+        }
         default:
             break;
     }
@@ -196,7 +210,7 @@ Action ActivateBullet(Ship *ship)
 {
     if (!ship->counter)
         ship->counter = 1;
-    return NO_ACTION;
+    return NO_GENERIC_ACTION;
 }
 
 void DrawBullet(Ship *ship)

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef DRAW_H
 #define DRAW_H
-#include <SDL2/SDL.h>
+#include <stdint.h>
 
 void DrawArrow(uint8_t x, uint8_t y, uint8_t facing);
 void OutlineTile(uint8_t x, uint8_t y);

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef SHIP_H
 #define SHIP_H
-#include <SDL2/SDL.h>
+#include <stdint.h>
 #include "super_header.h"
 
 int FacingX(Facing facing);
@@ -21,6 +21,7 @@ typedef struct __ship
 
     Color color; // 4 bytes
     void *data; // 8 bytes
+    char *name; // 8 bytes
 } Ship;
 
 /** Standard Functions **/

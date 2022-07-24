@@ -2,7 +2,8 @@
 #ifndef SUPER_HEADER_H
 #define SUPER_HEADER_H
 #include <math.h>
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_bits.h>
+#include <SDL2/SDL_render.h>
 #include "field.h"
 
 #define STR(x) #x

@@ -1,4 +1,5 @@
 #include "draw.h"
+#include <stdlib.h>
 #include "super_header.h"
 #include "ship.h"
 

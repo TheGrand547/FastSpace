@@ -13,18 +13,19 @@ SDL_Rect GetTile(uint8_t x, uint8_t y)
 
 unsigned int WindowSizeX()
 {
-    return GameField.width * (GameField.rectWidth + GameField.spacing) - GameField.spacing + 200;
+    return GameField.width * (GameField.rectWidth + GameField.spacing)
+            - GameField.spacing + 300;
 }
 
 unsigned int WindowSizeY()
 {
-    return GameField.height * (GameField.rectHeight + GameField.spacing) - GameField.spacing;
+    return GameField.height * (GameField.rectHeight + GameField.spacing)
+            - GameField.spacing;
 }
 
 void DrawField(Field *field)
 {
-    if (!field)
-        return;
+    NULL_CHECK(field);
     SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x48, 0xCF, 0xFF);
     SDL_Rect rect = {0, 0, field->rectWidth, field->rectHeight};
     for (unsigned int x = 0; x < field->width; x++)
