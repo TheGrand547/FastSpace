@@ -7,6 +7,20 @@
 #include "player.h"
 #include "ship_data.h"
 
+const char *HumanReadableStringFrom(Action action)
+{
+    switch (action)
+    {
+        case TURN_LEFT: return "Turning Left";
+        case TURN_RIGHT: return "Turning Right";
+        case TURN_AROUND: return "Turning Around";
+        case SHOOT: return "Firing Weapons";
+        case NO_ACTION: return "Developer Messed Up";
+        case NO_GENERIC_ACTION: return "Coasting";
+        default: return "Developer Messed Up";
+    }
+}
+
 // TODO: Make logger with freopen() on stderr
 
 static void DrawShipType(Ship *ship);
@@ -25,7 +39,8 @@ static struct ShipData ShipsData[LAST_SHIP] = {
     {CreateNoneShip,   ActivateNoneShip,   FreeShip,       DrawShipType, NoneImageData, NULL}, // None ship
     {CreateCircleShip, ActivateCircleShip, FreeCircleShip, DrawShipType, CircleImageData, NULL}, // Circle ship
     {CreatePlayer,     ActivatePlayer,     FreePlayerShip, DrawShipType, PlayerImageData, NULL}, // Player ship
-    {CreateBullet,     ActivateBullet,     FreeBullet,     DrawShipType, BulletImageData, NULL}  // Generic Bullet
+    {CreateBullet,     ActivateBullet,     FreeBullet,     DrawShipType, BulletImageData, NULL},  // Generic Bullet
+    {CreateNoneShip,   ActivateNoneShip,   FreeShip,       DrawShipType, NoneImageData, NULL} // Going to be the looper
 };
 
 #define NUM_SHIP_TYPES LAST_SHIP
@@ -87,6 +102,7 @@ void ActivateShip(void *data)
     Ship *ship = (Ship*) data;
     MoveShip(ship);
     Action action = ShipsData[ship->type].action(ship);
+    printf("%p is %s\n", data, HumanReadableStringFrom(action));
     switch (action)
     {
         case SHOOT:
@@ -112,7 +128,7 @@ void ActivateShip(void *data)
         }
         case NO_ACTION:
         {
-            printf("Ship %p returned an invalid action result.\n", data);
+            fprintf(stderr, "Ship %p returned an invalid action result.\n", data);
             break;
         }
         default:
@@ -239,7 +255,7 @@ static void DrawShipType(Ship *ship)
     double angle = 0;
     if (facing == LEFT)
         flip = SDL_FLIP_HORIZONTAL;
-    // Angles are based on screen relative angles
+    // Angles are screen relative
     if (facing == UP)
         angle = 270;
     if (facing == DOWN)

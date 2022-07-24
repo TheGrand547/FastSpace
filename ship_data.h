@@ -1,7 +1,7 @@
 #pragma once
 #ifndef SHIP_DATA_H
 #define SHIP_DATA_H
-#include <inttypes.h>
+#include <stdint.h>
 #define ShipImageDataFunction(name) const struct ShipImageData * name () { return &_##name; }
 #define SHIP_IMAGE_MAX_WIDTH 10
 #define SHIP_IMAGE_MAX_HEIGHT 10

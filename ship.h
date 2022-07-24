@@ -7,6 +7,15 @@
 int FacingX(Facing facing);
 int FacingY(Facing facing);
 
+typedef enum
+{
+    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION
+    // Arbitrarily many others
+} Action;
+
+// TODO: Do a thing where you calculate what the next action is right after
+// executing the previous turn so you can display their next action on screen
+
 // Size of these is somewhat irrelevant as they'll only be passed via pointer
 // wish I could have small pointers or something
 typedef struct __ship
@@ -34,6 +43,6 @@ void TurnLeft(Ship *ship);
 
 void ColorShip(Ship *ship, uint32_t color);
 
-Ship* CreateGenericShip(uint8_t x, uint8_t y, Facing facing);
+Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing);
 SDL_Point ShipNextTile(Ship *ship);
 #endif // SHIP_H

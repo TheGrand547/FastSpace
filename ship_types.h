@@ -3,15 +3,11 @@
 #define SHIP_TYPES_H
 #include "ship.h"
 
-typedef enum
-{
-    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION
-    // Arbitrarily many others
-} Action;
+const char *HumanReadableStringFrom(Action action);
 
 typedef enum
 {
-    NONE_SHIP, CIRCLE, USER, BULLET, LAST_SHIP // Up to 16 so it fits in Uint8 : 4
+    NONE_SHIP, CIRCLE, USER, BULLET, PATROLLER, LAST_SHIP // Up to 16 so it fits in Uint8 : 4
 } ShipType;
 
 //** External Setup/Cleanup Methods **//

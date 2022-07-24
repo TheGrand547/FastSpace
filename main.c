@@ -10,11 +10,13 @@
 #include "draw.h"
 #include "font.h"
 #include "misc.h"
+#include "names.h"
 #include "player.h"
 #include "setup.h"
 #include "ship.h"
 #include "ship_types.h"
 #include "super_header.h"
+// TODO: put these in their proper places
 
 
 // TODO: Find an appropriate place for these
@@ -81,7 +83,6 @@ int main(int argc, char **argv)
     } flags;
     flags.windowSize = 1;
 
-
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
     EnableDebugDisplay(SHOW_TURN, TOP_RIGHT, &turn);
     EnableDebugDisplay(SHOW_COUNTDOWN, TOP_RIGHT, NULL);
@@ -89,7 +90,9 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
 
     const char *message = "here is some text because I am bored";
-
+    char *goob = GetName(message);
+    if (goob)
+        printf("%s\n", goob);
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
@@ -286,7 +289,7 @@ int main(int argc, char **argv)
                 {
                     char buffer[100];
                     // TODO: This is garbage
-                    sprintf(buffer, "Location:%8Xz\nFacing: ----\nOther stuff", (size_t) s);
+                    sprintf(buffer, "Location:%8X\nFacing: ----\nOther stuff", (size_t) s);
                     selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
                     selected_rect.x = WindowSizeX() - selected_rect.w;
                     selected_rect.y = 200;
@@ -326,6 +329,7 @@ void ShootGamer(Ship *ship)
 {
     Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);
     NULL_CHECK(bullet);
+    // I know this is a temp function, but you really need to always check your damn pointers
     ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
     ArrayAppend(badBullets, bullet);
 }

@@ -398,7 +398,10 @@ SDL_Texture *FontRenderTextWrappedSize(SDL_Renderer *renderer, const char *strin
         const char *newline = strstr(current, "\n");
         // Hope that this never happens
         if (subSize > maxWidth)
+        {
             printf("This behavior has not been defined\n");
+            return NULL;
+        }
         if (newline)
         {
             // If it's just the new line token, then place it and continue

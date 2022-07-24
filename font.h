@@ -3,6 +3,7 @@
 #define GRAND_FONT_H
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_rect.h>
+#include <stdint.h>
 
 char **StrSplit(const char *string, const char *delimiters);
 void StrSplitCleanup(char **strings);
