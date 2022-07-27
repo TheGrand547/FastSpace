@@ -84,6 +84,7 @@ void DebugDisplayDraw()
 // Must be static or it will be leaked
 static SDL_Texture *fpsTexture = NULL;
 #define FPS_MS_UPDATE_FREQ 50 // Delay between fps polls
+#define SEC_TO_MS 0.0001f
 
 void EnableFpsDisplay(void *data)
 {
@@ -108,7 +109,7 @@ void DrawFpsDisplay()
     const uint32_t difference = SDL_GetTicks() - fpsStart;
     if (difference > FPS_MS_UPDATE_FREQ)
     {
-        fps = counted / (FPS_MS_UPDATE_FREQ * 0.001f);
+        fps = counted / (FPS_MS_UPDATE_FREQ * SEC_TO_MS);
         if (fpsTexture)
             SDL_DestroyTexture(fpsTexture);
         sprintf(fpsText, "FPS: %4.0lf", fps);
@@ -146,8 +147,7 @@ static void DestroyTurnDisplay()
 
 static void DrawTurnDisplay()
 {
-    if (!currentTurn)
-        return;
+    NULL_CHECK(currentTurn);
     SDL_Rect turnRect;
     turnTexture = FontRenderTextSize(GameRenderer, turnNames[*currentTurn], 15, &turnRect);
     SetLocation(&turnRect, DisplaysPlace[EnumToIndex(SHOW_TURN)]);

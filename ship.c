@@ -27,6 +27,12 @@ int FacingY(Facing facing)
     return value;
 }
 
+int InTileShip(uint8_t x, uint8_t y, Ship *ship)
+{
+    NULL_CHECK_RETURN(ship, 0);
+    return (ship->x == x) && (ship->y == y)
+}
+
 void DestroyShip(Ship *ship)
 {
     if (ship->name)
@@ -49,6 +55,11 @@ void TurnRight(Ship *ship)
 void TurnLeft(Ship *ship)
 {
     ship->facing--;
+}
+
+void TurnAround(Ship *ship)
+{
+    ship->facing -= 2;
 }
 
 void ColorShip(Ship *ship, uint32_t color)

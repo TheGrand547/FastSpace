@@ -18,6 +18,7 @@ const char *HumanReadableStringFrom(Action action)
         case SHOOT: return "Firing Weapons";
         case NO_ACTION: return "Developer Messed Up";
         case NO_GENERIC_ACTION: return "Coasting";
+        case OVERRIDE: return "Gravitationally Stable";
         default: return "Developer Messed Up";
     }
 }
@@ -154,9 +155,7 @@ void ActivateShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
-    MoveShip(ship);
     Action action = ShipsData[ship->type].action(ship);
-    printf("%p is %s\n", data, HumanReadableStringFrom(action));
     switch (action)
     {
         case SHOOT:
@@ -164,10 +163,9 @@ void ActivateShip(void *data)
             ShootGamer(ship); // TODO: fix this hack thingy
             break;
         }
-        case TURN_AROUND: // Intentional fallthrough to double turn
+        case TURN_AROUND:
         {
-            TurnLeft(ship);
-            TurnLeft(ship);
+            TurnAround(ship);
             break;
         }
         case TURN_LEFT:
@@ -180,6 +178,8 @@ void ActivateShip(void *data)
             TurnRight(ship);
             break;
         }
+        case OVERRIDE:
+            return;
         case NO_ACTION:
         {
             fprintf(stderr, "Ship %p returned an invalid action result.\n", data);
@@ -188,22 +188,21 @@ void ActivateShip(void *data)
         default:
             break;
     }
+    MoveShip(ship);
 }
 
 void CleanupShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
-    if (ship)
-        ShipsData[ship->type].free(ship);
+    ShipsData[ship->type].free(ship);
 }
 
 void DrawShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
-    if (ship)
-        ShipsData[ship->type].draw(ship);
+    ShipsData[ship->type].draw(ship);
 }
 
 //** Ship Function Map Implementations **//
@@ -221,7 +220,6 @@ Action ActivateNone(Ship *ship)
     return NO_ACTION;
 }
 
-// TODO: Investigate the counter, something fishy is going on
 void FreeShip(Ship *ship)
 {
     NULL_CHECK(ship);
@@ -233,8 +231,7 @@ void FreeShip(Ship *ship)
 void DrawBlankShip(Ship *ship)
 {
     SDL_Rect rect = GetTile(ship->x, ship->y);
-    SDL_SetRenderDrawColor(GameRenderer, ship->color.r,
-                           ship->color.g, ship->color.b, ship->color.a);
+    SetRenderDrawColor(GameRenderer, ship->color);
     SDL_RenderFillRect(GameRenderer, &rect);
     DrawArrow(ship->x, ship->y, ship->facing);
 }
@@ -314,6 +311,6 @@ static void DrawShipType(Ship *ship)
         angle = 270;
     if (facing == DOWN)
         angle = 90;
-    SDL_SetTextureColorMod(texture, ship->color.r, ship->color.g, ship->color.b);
+    SetTextureColorMod(texture, ship->color);
     SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
 }

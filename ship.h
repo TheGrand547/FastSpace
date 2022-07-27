@@ -9,7 +9,7 @@ int FacingY(Facing facing);
 
 typedef enum
 {
-    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION
+    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION, OVERRIDE,
     // Arbitrarily many others
 } Action;
 
@@ -35,12 +35,15 @@ typedef struct __ship
 } Ship;
 
 /** Standard Functions **/
+int InTileShip(uint8_t x, uint8_t y, Ship *ship);
+
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);
 
 void MoveShip(Ship *ship);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
+void TurnAround(Ship *ship);
 
 void ColorShip(Ship *ship, uint32_t color);
 

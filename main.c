@@ -40,10 +40,10 @@ static struct
 
 static Array *badBullets;
 //static Array *goodBullets;
+// TODO: Have array of all the different arrays that hold ships so it can be easily tracked
 
 int main(int argc, char **argv)
 {
-    UNUSED(argc);
     int loop = 1;
     InitDebugDisplay(argc, argv);
 
@@ -90,15 +90,6 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
 
     const char *message = "here is some text because I am bored";
-    char *goob = GetName("Patrol");
-    if (goob)
-        printf("%s\n", goob);
-    free(goob);
-
-    SDL_Rect sizer;
-    SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
-    SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
-    sizer.x = 300;
 
     SDL_Rect rect; // Like with the 's' pointer this is for any generic rectangle that could be needed
     void *selected_ship = NULL; // Currently selected ship
@@ -111,7 +102,9 @@ int main(int argc, char **argv)
 
         SDL_SetRenderDrawColor(GameRenderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(GameRenderer);
+
         unsigned int turnAdvance = (turn == PLAYER) && (selection != NO_ACTION);
+
         while (SDL_PollEvent(&e))
         {
             if (e.type == SDL_QUIT)
@@ -297,14 +290,14 @@ int main(int argc, char **argv)
                 SDL_RenderCopy(GameRenderer, selected_texture, NULL, &selected_rect);
             }
         }
-        // TODO: Clean up misc stuff
+
+        // TODO: Clean up misc stuff <- I don't know what this is referring to
         DrawField(&GameField);
         DrawShip(player);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(badBullets, DrawShip);
         DrawButton(button);
 
-        SDL_RenderCopy(GameRenderer, t, NULL, &sizer);
         DebugDisplayDraw();
 
         // End of frame stuff
