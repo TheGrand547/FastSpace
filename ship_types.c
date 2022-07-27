@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "draw.h"
 #include "misc.h"
+#include "names.h"
 #include "player.h"
 #include "ship_data.h"
 
@@ -33,14 +34,57 @@ struct ShipData
     const ShipDrawFunc draw;
     const ShipDataFunc imageData;
     SDL_Texture *texture;
+    const char *name;
 };
 
+// TODO: Move the image data here
 static struct ShipData ShipsData[LAST_SHIP] = {
-    {CreateNoneShip,   ActivateNoneShip,   FreeShip,       DrawShipType, NoneImageData, NULL}, // None ship
-    {CreateCircleShip, ActivateCircleShip, FreeCircleShip, DrawShipType, CircleImageData, NULL}, // Circle ship
-    {CreatePlayer,     ActivatePlayer,     FreePlayerShip, DrawShipType, PlayerImageData, NULL}, // Player ship
-    {CreateBullet,     ActivateBullet,     FreeBullet,     DrawShipType, BulletImageData, NULL},  // Generic Bullet
-    {CreateNoneShip,   ActivateNoneShip,   FreeShip,       DrawShipType, NoneImageData, NULL} // Going to be the looper
+    {
+        CreateNone,
+        ActivateNone,
+        FreeShip,
+        DrawShipType,
+        NoneImageData,
+        NULL,
+        "Wreckage"
+    }, // None ship
+    {
+        CreateCircle,
+        ActivateCircle,
+        FreeCircle,
+        DrawShipType,
+        CircleImageData,
+        NULL,
+        "Patroller"
+    }, // Circle ship
+
+    {
+        CreatePlayer,
+        ActivatePlayer,
+        FreePlayer,
+        DrawShipType,
+        PlayerImageData,
+        NULL,
+        "You, goober"
+    }, // Player ship
+    {
+        CreateBullet,
+        ActivateBullet,
+        FreeBullet,
+        DrawShipType,
+        BulletImageData,
+        NULL,
+        "Bullet"
+    },  // Generic Bullet
+    {
+        CreateNone,
+        ActivateNone,
+        FreeShip,
+        DrawShipType,
+        NoneImageData,
+        NULL,
+        "Dizzyman"
+    } // Going to be the looper
 };
 
 #define NUM_SHIP_TYPES LAST_SHIP
@@ -96,6 +140,16 @@ void FreeShipImages()
 }
 
 //* Generic Activation Functions *//
+char *GetNameShip(void *data)
+{
+    NULL_CHECK_RETURN(data, NULL);
+    Ship *ship = (Ship*) data;
+    if (ship->name)
+        return ship->name;
+    ship->name = GetName(ShipsData[ship->type].name);
+    return ship->name;
+}
+
 void ActivateShip(void *data)
 {
     NULL_CHECK(data);
@@ -155,12 +209,12 @@ void DrawShip(void *data)
 //** Ship Function Map Implementations **//
 
 /** Generic ship **/
-Ship *CreateNoneShip(uint8_t x, uint8_t y, Facing facing)
+Ship *CreateNone(uint8_t x, uint8_t y, Facing facing)
 {
     return CreateGenericShip(x, y, facing);
 }
 
-Action ActivateNoneShip(Ship *ship)
+Action ActivateNone(Ship *ship)
 {
     if (ship->type == NONE_SHIP)
         SDL_Log("NoneShip %p was activated\n", (void*) ship);
@@ -186,7 +240,7 @@ void DrawBlankShip(Ship *ship)
 }
 
 /** Circle Ship **/
-Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing)
+Ship *CreateCircle(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = CreateGenericShip(x, y, facing);
     if (ship)
@@ -198,7 +252,7 @@ Ship *CreateCircleShip(uint8_t x, uint8_t y, Facing facing)
     return ship;
 }
 
-Action ActivateCircleShip(Ship *ship)
+Action ActivateCircle(Ship *ship)
 {
     Action value = TURN_RIGHT;
     if (ship->counter)

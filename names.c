@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include "super_header.h"
 
 static const char *faction_strings[] = {
     "Goober", "Scoober", "Canoodler", "Hoplite"
@@ -9,9 +11,11 @@ static const char *faction_strings[] = {
 static const char *captain_names[] = {
     "Sam", "Ryan", "Jack", "Jill", "Elif", "Skipper"
 };
-#define NAME_LENGTH sizeof(captain_names) / sizeof(const char*)
+#define NAME_LENGTH POINTER_ARRAY_LENGTH(captain_names)
+#define FACTION_LENGTH POINTER_ARRAY_LENGTH(faction_strings)
 
 static size_t faction_index = 0;
+static size_t captain_index = 0;
 
 void SetFactionIndex(const size_t index)
 {
@@ -20,8 +24,11 @@ void SetFactionIndex(const size_t index)
 
 char *GetName(const char *type)
 {
-    char buffer[100];
-    // TODO: The shift thingy is cringe don't do it
-    sprintf(buffer, "%s %s %s", faction_strings[faction_index], type, captain_names[(((size_t) type) >> 3) % NAME_LENGTH]);
-    return strdup(buffer);
+    const char *faction = faction_strings[faction_index];
+    const char *captain = captain_names[captain_index++];
+    // 3 = 2 spaces + 1 null byte
+    char *buffer = malloc(strlen(faction) + strlen(type) + strlen(captain) + 3);
+    if (buffer)
+        sprintf(buffer, "%s %s %s", faction, type, captain);
+    return buffer;
 }

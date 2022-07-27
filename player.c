@@ -32,7 +32,7 @@ Ship *CreatePlayer(uint8_t x, uint8_t y, Facing facing)
     return ship;
 }
 
-void FreePlayerShip(Ship *ship)
+void FreePlayer(Ship *ship)
 {
     // Clean up user struct
     FreeShip(ship);

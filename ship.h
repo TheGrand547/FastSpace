@@ -21,15 +21,16 @@ typedef enum
 typedef struct __ship
 {
     uint8_t x : 4, y : 4;
-    // Full Uint
+    // Full uint8_t
 
     uint8_t facing : 2;
     uint8_t type : 4;
     uint8_t counter : 2;
-    // Full Uint
+    // Full uint8_t
+    // Two bytes of uint8_t
 
     Color color; // 4 bytes
-    void *data; // 8 bytes
+    void *data; // 8 bytes, data pointer
     char *name; // 8 bytes
 } Ship;
 

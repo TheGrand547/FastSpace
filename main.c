@@ -64,8 +64,8 @@ int main(int argc, char **argv)
     badBullets = ArrayNew();
 
     printf("player\n");
-    ArrayAppend(ships, CreateCircleShip(5, 6, LEFT));
-    ArrayAppend(ships, CreateCircleShip(4, 3, RIGHT));
+    ArrayAppend(ships, CreateCircle(5, 6, LEFT));
+    ArrayAppend(ships, CreateCircle(4, 3, RIGHT));
 
     ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     SDL_Event e;
@@ -90,9 +90,11 @@ int main(int argc, char **argv)
     LoadShipImages(); // HACKY
 
     const char *message = "here is some text because I am bored";
-    char *goob = GetName(message);
+    char *goob = GetName("Patrol");
     if (goob)
         printf("%s\n", goob);
+    free(goob);
+
     SDL_Rect sizer;
     SDL_Texture *t = FontRenderTextWrappedSize(GameRenderer, message, 20, 300, &sizer);
     SDL_SetTextureColorMod(t, 0x00, 0xFF, 0x00);
@@ -287,10 +289,7 @@ int main(int argc, char **argv)
                 OutlineTileBufferColor(s->x, s->y);
                 if (!selected_texture)
                 {
-                    char buffer[100];
-                    // TODO: This is garbage
-                    sprintf(buffer, "Location:%8X\nFacing: ----\nOther stuff", (size_t) s);
-                    selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
+                    selected_texture = FontRenderTextSize(GameRenderer, GetNameShip(s), 15, &selected_rect);
                     selected_rect.x = WindowSizeX() - selected_rect.w;
                     selected_rect.y = 200;
                     SDL_SetTextureColorMod(selected_texture, 0xFF, 0x00, 0x00);

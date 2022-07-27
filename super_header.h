@@ -13,6 +13,8 @@
 #define FLOAT_EQUAL(x, y) (fabs((x) - (y)) < FLOAT_EPSILON)
 #define NULL_CHECK(x) if (!x) return;
 #define NULL_CHECK_RETURN(x, ret) if (!x) return ret;
+#define STATIC_ARRAY_LENGTH(array, type) sizeof(array) / sizeof(type)
+#define POINTER_ARRAY_LENGTH(array) STATIC_ARRAY_LENGTH(array, void*)
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000
