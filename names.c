@@ -11,8 +11,8 @@ static const char *faction_strings[] = {
 static const char *captain_names[] = {
     "Sam", "Ryan", "Jack", "Jill", "Elif", "Skipper"
 };
-#define NAME_LENGTH POINTER_ARRAY_LENGTH(captain_names)
-#define FACTION_LENGTH POINTER_ARRAY_LENGTH(faction_strings)
+#define NAME_LENGTH STATIC_ARRAY_LENGTH(captain_names)
+#define FACTION_LENGTH STATIC_ARRAY_LENGTH(faction_strings)
 
 static size_t faction_index = 0;
 static size_t captain_index = 0;

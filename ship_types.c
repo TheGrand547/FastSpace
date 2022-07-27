@@ -87,7 +87,7 @@ static struct ShipData ShipsData[LAST_SHIP] = {
     } // Going to be the looper
 };
 
-#define NUM_SHIP_TYPES LAST_SHIP
+#define NUM_SHIP_TYPES STATIC_ARRAY_LENGTH(ShipsData)
 
 static void LoadShipimage(SDL_Renderer *renderer, unsigned int index)
 {

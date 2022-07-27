@@ -160,7 +160,7 @@ static void SetLocation(SDL_Rect *rect, DisplayLocation location)
     static int offsets[] = {0, 0, 0, 0};
     if (!rect)
     {
-        for (unsigned int i = 0; i < sizeof(offsets) / sizeof(offsets[0]); i++)
+        for (unsigned int i = 0; i < STATIC_ARRAY_LENGTH(offsets); i++)
             offsets[i] = 0;
         return;
     }
