@@ -14,6 +14,9 @@ typedef struct
 
 SDL_Rect GetTile(uint8_t x, uint8_t y);
 
+unsigned int IndexFromLocation(uint8_t x, uint8_t y);
+unsigned int NumTiles();
+
 unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 

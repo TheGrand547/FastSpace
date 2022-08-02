@@ -30,7 +30,7 @@
 
 SDL_Renderer *GameRenderer;
 SDL_Window *GameWindow;
-Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, 0, 0, SPACING};
+Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, SPACING, SPACING, SPACING};
 
 // TODO: THIS IS HORRIFIC PLEASE FIX IT WHEN YOU GET TO MENUS AND STUFF
 static struct
@@ -39,6 +39,7 @@ static struct
 } userSettings = {250}; // 250 is what it was before, that felt a tad slow
 
 static Array *badBullets;
+static Array *collisionHolder;
 //static Array *goodBullets;
 // TODO: Have array of all the different arrays that hold ships so it can be easily tracked
 
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
 
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
-    player->type = USER;
+
     Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
     badBullets = ArrayNew();
@@ -80,8 +81,11 @@ int main(int argc, char **argv)
         uint8_t switchTurn : 1; // 5 unused
         uint8_t windowSize : 1;
         uint8_t bufferState : 1;
+        uint8_t goob : 1;
     } flags;
     flags.windowSize = 1;
+    flags.switchTurn = 0;
+    flags.bufferState = 0;
 
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
     EnableDebugDisplay(SHOW_TURN, TOP_RIGHT, &turn);
@@ -89,13 +93,14 @@ int main(int argc, char **argv)
 
     LoadShipImages(); // HACKY
 
-    const char *message = "here is some text because I am bored";
-
     SDL_Rect rect; // Like with the 's' pointer this is for any generic rectangle that could be needed
     void *selected_ship = NULL; // Currently selected ship
     SDL_Texture *selected_texture = NULL;
     SDL_Rect selected_rect;
 
+    void **dp; // Dummy double pointer(no immature jokes)
+
+    collisionHolder = ArrayNew();
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -129,9 +134,7 @@ int main(int argc, char **argv)
                             if (SDL_PointInRect(&mouse_pos, &rect))
                             {
                                 selected_ship = s;
-                                if (selected_texture)
-                                    SDL_DestroyTexture(selected_texture);
-                                selected_texture = NULL;
+                                ANNIHILATE_TEXTURE(selected_texture);
                             }
                         }
                     }
@@ -146,10 +149,7 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_G:
                     {
-                        Ship *bullet = CreateGenericShip(1, 6, RIGHT);
-                        bullet->type = BULLET;
-                        ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
-                        ArrayAppend(badBullets, bullet);
+                        flags.goob = ~flags.goob;
                         break;
                     }
                     case SDL_SCANCODE_A:
@@ -168,11 +168,11 @@ int main(int argc, char **argv)
                         flags.switchTurn = turnAdvance;
                         break;
                     case SDL_SCANCODE_O:
-                        GameField.spacing++;
+                        GameField.spacing += 2;
                         flags.windowSize = 1;
                         break;
                     case SDL_SCANCODE_L:
-                        GameField.spacing--;
+                        GameField.spacing -= 2;
                         flags.windowSize = 1;
                         break;
                     default:
@@ -227,8 +227,27 @@ int main(int argc, char **argv)
             ArrayIterate(ships, ActivateShip);      // Activate enemies
             ArrayIterate(badBullets, ActivateShip); // Activate bullets
 
+            ArrayReserve(collisionHolder, NumTiles());
+            ArrayClear(collisionHolder);
             // TODO: Make this not bad
             // There is heap corruption afoot
+            for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
+            {
+                s = (Ship*) ArrayElement(badBullets, i);
+                if (!s)
+                    continue;
+                size_t location = (size_t) IndexFromLocation(s->x, s->y);
+                Ship *s2 = ArrayElement(collisionHolder, location);
+                if (s2)
+                {
+                    printf("There was a collision at %u %u\n", s->x, s->y);
+                }
+                else
+                {
+                    if ((dp = ArrayReference(collisionHolder, location)))
+                        *dp = (void*) s;
+                }
+            }
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
                 s = (Ship*) ArrayElement(badBullets, i);
@@ -264,6 +283,7 @@ int main(int argc, char **argv)
         }
 
         // Drawing
+        DrawField(&GameField);
         if (turn == PLAYER)
         {
             // Outline each ships next position
@@ -282,7 +302,9 @@ int main(int argc, char **argv)
                 OutlineTileBufferColor(s->x, s->y);
                 if (!selected_texture)
                 {
-                    selected_texture = FontRenderTextSize(GameRenderer, GetNameShip(s), 15, &selected_rect);
+                    char buffer[100];
+                    sprintf(buffer, "%s\nAction: %s", GetNameShip(s), HumanReadableStringFrom(s->previous));
+                    selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
                     selected_rect.x = WindowSizeX() - selected_rect.w;
                     selected_rect.y = 200;
                     SDL_SetTextureColorMod(selected_texture, 0xFF, 0x00, 0x00);
@@ -292,8 +314,10 @@ int main(int argc, char **argv)
         }
 
         // TODO: Clean up misc stuff <- I don't know what this is referring to
-        DrawField(&GameField);
         DrawShip(player);
+        OutlineTile(player->x, player->y);
+        if (flags.goob)
+            OutlineTile(3, 1);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(badBullets, DrawShip);
         DrawButton(button);
@@ -317,6 +341,7 @@ int main(int argc, char **argv)
 
 /** ANYTHING BELOW THIS LINE IS TEMPORARY AND SHOULD NOT REMAIN HERE **/
 
+// Bullet hackiness is here
 void ShootGamer(Ship *ship)
 {
     Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);

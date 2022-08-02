@@ -27,15 +27,25 @@ void DrawArrow(uint8_t x, uint8_t y, uint8_t facing)
 
 void OutlineTileBufferColor(uint8_t x, uint8_t y)
 {
+    #define RATIO 2
     SDL_Renderer *renderer = GameRenderer;
     if (x >= GameField.width || y >= GameField.height)
         return;
-    const uint8_t w = GameField.rectWidth;
-    const uint8_t h = GameField.rectHeight;
-    const uint8_t s = GameField.spacing;
-    SDL_Rect rect = {GameField.basePointX + x * (w + s) - s,
-                     GameField.basePointY + y * (h + s) - s, w + 2 * s, h + 2 * s};
-    SDL_RenderFillRect(renderer, &rect);
+    const uint8_t s = GameField.spacing / RATIO;
+
+    SDL_Rect tile = GetTile(x, y);
+    tile.x -= s;
+    tile.y -= s;
+    tile.w += s * RATIO;
+    tile.h += s * RATIO;
+    for (unsigned int i = 0; i < s; i++)
+    {
+        SDL_RenderDrawRect(renderer, &tile);
+        tile.x += 1;
+        tile.y += 1;
+        tile.w -= 2;
+        tile.h -= 2;
+    }
 }
 
 void OutlineTile(uint8_t x, uint8_t y)

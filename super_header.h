@@ -6,6 +6,7 @@
 #include <SDL2/SDL_render.h>
 #include "field.h"
 
+// Generic defines
 #define STR(x) #x
 #define CONST_STR(x) const char * x##_str = STR(x)
 #define UNUSED(x) (void)(x)
@@ -15,6 +16,9 @@
 #define NULL_CHECK_RETURN(x, ret) if (!x) return ret;
 #define SAFE_STATIC_ARRAY_LENGTH(array, type) sizeof(array) / sizeof(type)
 #define STATIC_ARRAY_LENGTH(array) sizeof(array) / sizeof(array[0])
+
+// SDL2 defines
+#define ANNIHILATE_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000

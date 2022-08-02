@@ -30,7 +30,7 @@ int FacingY(Facing facing)
 int InTileShip(uint8_t x, uint8_t y, Ship *ship)
 {
     NULL_CHECK_RETURN(ship, 0);
-    return (ship->x == x) && (ship->y == y)
+    return (ship->x == x) && (ship->y == y);
 }
 
 void DestroyShip(Ship *ship)
@@ -90,7 +90,7 @@ Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
         shipCount--;
         return NULL;
     }
-    *ship = (Ship) {x, y, facing, NONE_SHIP, 0,
+    *ship = (Ship) {x, y, facing, NONE_SHIP, 0, NO_ACTION,
                     (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL, NULL};
     return ship;
 }

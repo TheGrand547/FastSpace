@@ -84,7 +84,7 @@ void DebugDisplayDraw()
 // Must be static or it will be leaked
 static SDL_Texture *fpsTexture = NULL;
 #define FPS_MS_UPDATE_FREQ 50 // Delay between fps polls
-#define SEC_TO_MS 0.0001f
+#define SEC_TO_MS 0.001f
 
 void EnableFpsDisplay(void *data)
 {
@@ -103,7 +103,7 @@ void DrawFpsDisplay()
     static double fps = 0;
     static uint32_t counted = 0;
     static uint32_t fpsStart = 0;
-    static char fpsText[11]; // FPS: 0000 -> 4 + 2 + 4 + 1 for null -> 11
+    static char fpsText[10]; // FPS: 0000 -> 3 + 2 + 4 + 1 for null -> 10
     static SDL_Rect fpsRect = {0, 0, 0, 0};
 
     const uint32_t difference = SDL_GetTicks() - fpsStart;

@@ -156,6 +156,10 @@ void ActivateShip(void *data)
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
     Action action = ShipsData[ship->type].action(ship);
+    ship->previous = action;
+    if (action == OVERRIDE)
+        return;
+    MoveShip(ship);
     switch (action)
     {
         case SHOOT:
@@ -178,8 +182,6 @@ void ActivateShip(void *data)
             TurnRight(ship);
             break;
         }
-        case OVERRIDE:
-            return;
         case NO_ACTION:
         {
             fprintf(stderr, "Ship %p returned an invalid action result.\n", data);
@@ -188,7 +190,6 @@ void ActivateShip(void *data)
         default:
             break;
     }
-    MoveShip(ship);
 }
 
 void CleanupShip(void *data)
@@ -269,7 +270,10 @@ Ship *CreateBullet(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *bullet = CreateGenericShip(x, y, facing);
     if (bullet)
+    {
+        bullet->counter = 0;
         bullet->type = BULLET;
+    }
     return bullet;
 }
 

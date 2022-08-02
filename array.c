@@ -7,7 +7,7 @@ typedef struct Array
 {
     void **array;
     size_t length;
-    unsigned int size;
+    size_t size;
 } Array;
 
 Array* ArrayCreate(size_t size)
@@ -39,6 +39,13 @@ void ArrayDestroy(Array *array)
         free(array->array);
         free(array);
     }
+}
+
+void ArrayClear(Array *array)
+{
+    if (!array)
+        return;
+    memset(array->array, 0, array->size * sizeof(void*));
 }
 
 void ArrayAnnihilate(Array **array, ArrayFunc clean)
@@ -186,7 +193,15 @@ void ArrayDelete(Array *array, void *data)
     }
 }
 
-void ArrayClear(Array *array, ArrayFunc clean)
+void ArrayReserve(Array *array, size_t size)
+{
+    if (!array || array->size >= size)
+        return;
+    array->array = realloc(array->array, size * sizeof(void*));
+    array->size = size;
+}
+
+void ArrayCleanup(Array *array, ArrayFunc clean)
 {
     if (array)
     {

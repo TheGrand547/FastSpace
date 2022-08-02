@@ -29,6 +29,7 @@ typedef struct __ship
     // Full uint8_t
     // Two bytes of uint8_t
 
+    Action previous; // 4 bytes, stores next action
     Color color; // 4 bytes
     void *data; // 8 bytes, data pointer
     char *name; // 8 bytes
