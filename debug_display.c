@@ -21,6 +21,11 @@ static void EnableTurnDisplay(void *data);
 static void DestroyTurnDisplay();
 static void DrawTurnDisplay();
 
+// Countdown
+static void EnableCountdownDisplay(void *data);
+static void DestroyCountdownDisplay();
+static void DrawCountdownDisplay();
+
 static void SetLocation(SDL_Rect *rect, DisplayLocation location);
 
 void InitDebugDisplay(int argc, char **argv)
@@ -43,6 +48,8 @@ void QuitDebugDisplay()
         DestroyFpsDisplay();
     if (toKill & SHOW_TURN)
         DestroyTurnDisplay();
+    if (toKill & SHOW_COUNTDOWN)
+        DestroyCountdownDisplay();
     InitializedDisplays = 0;
 }
 
@@ -58,6 +65,11 @@ void EnableDebugDisplay(DebugDisplayFlags flag, DisplayLocation location, void *
         case SHOW_TURN:
         {
             EnableTurnDisplay(data);
+            break;
+        }
+        case SHOW_COUNTDOWN:
+        {
+            EnableCountdownDisplay(data);
             break;
         }
         default:
@@ -78,6 +90,8 @@ void DebugDisplayDraw()
         DrawFpsDisplay();
     if (InitializedDisplays & SHOW_TURN)
         DrawTurnDisplay();
+    if (InitializedDisplays & SHOW_COUNTDOWN)
+        DrawCountdownDisplay();
 }
 
 /** FPS stuff **/
@@ -153,6 +167,34 @@ static void DrawTurnDisplay()
     SetLocation(&turnRect, DisplaysPlace[EnumToIndex(SHOW_TURN)]);
     SDL_SetTextureColorMod(turnTexture, 0xFF, 0x00, 0x00);
     SDL_RenderCopy(GameRenderer, turnTexture, NULL, &turnRect);
+}
+
+
+/** Buffer Countdown Stuff **/
+static char countdownBuffer[6]; // 0.000, 4 digits, 1 period, 1 null
+static SDL_Texture *countdownTexture = NULL;
+static uint32_t *countdownPointer = NULL;
+
+static void EnableCountdownDisplay(void *data)
+{
+    countdownPointer = (uint32_t*) data;
+}
+
+static void DestroyCountdownDisplay()
+{
+    DESTROY_SDL_TEXTURE(countdownTexture);
+    countdownPointer = NULL;
+}
+
+static void DrawCountdownDisplay()
+{
+    NULL_CHECK(countdownPointer);
+    SDL_Rect downRect;
+    sprintf(countdownBuffer, "%u", *countdownPointer);
+    countdownTexture = FontRenderTextSize(GameRenderer, countdownBuffer, 15, &downRect);
+    SetLocation(&downRect, DisplaysPlace[EnumToIndex(SHOW_TURN)]);
+    SDL_SetTextureColorMod(countdownTexture, 0xFF, 0x00, 0x00);
+    SDL_RenderCopy(GameRenderer, countdownTexture, NULL, &downRect);
 }
 
 static void SetLocation(SDL_Rect *rect, DisplayLocation location)

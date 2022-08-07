@@ -46,6 +46,7 @@ void ArrayClear(Array *array)
     if (!array)
         return;
     memset(array->array, 0, array->size * sizeof(void*));
+    array->length = 0;
 }
 
 void ArrayAnnihilate(Array **array, ArrayFunc clean)
@@ -102,7 +103,7 @@ void ArrayIterate(Array *array, ArrayFunc func)
 
 void **ArrayReference(Array *array, size_t index)
 {
-    if (!array)
+    if (!array || array->length >= index)
         return NULL;
     return (void**) array->array + index;
 }

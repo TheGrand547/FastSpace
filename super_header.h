@@ -18,7 +18,7 @@
 #define STATIC_ARRAY_LENGTH(array) sizeof(array) / sizeof(array[0])
 
 // SDL2 defines
-#define ANNIHILATE_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL;
+#define DESTROY_SDL_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000

@@ -40,7 +40,7 @@ static struct
 
 static Array *badBullets;
 static Array *collisionHolder;
-//static Array *goodBullets;
+static Array *goodBullets;
 // TODO: Have array of all the different arrays that hold ships so it can be easily tracked
 
 int main(int argc, char **argv)
@@ -60,9 +60,11 @@ int main(int argc, char **argv)
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
 
-    Ship *s; // Arbitrary temp ship
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
+
+    collisionHolder = ArrayNew();
     badBullets = ArrayNew();
+    goodBullets = ArrayNew();
 
     printf("player\n");
     ArrayAppend(ships, CreateCircle(5, 6, LEFT));
@@ -81,26 +83,28 @@ int main(int argc, char **argv)
         uint8_t switchTurn : 1; // 5 unused
         uint8_t windowSize : 1;
         uint8_t bufferState : 1;
+        uint8_t doCollision : 1;
         uint8_t goob : 1;
     } flags;
     flags.windowSize = 1;
     flags.switchTurn = 0;
     flags.bufferState = 0;
+    flags.doCollision = 0;
 
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
     EnableDebugDisplay(SHOW_TURN, TOP_RIGHT, &turn);
-    EnableDebugDisplay(SHOW_COUNTDOWN, TOP_RIGHT, NULL);
 
     LoadShipImages(); // HACKY
 
-    SDL_Rect rect; // Like with the 's' pointer this is for any generic rectangle that could be needed
     void *selected_ship = NULL; // Currently selected ship
     SDL_Texture *selected_texture = NULL;
     SDL_Rect selected_rect;
 
+    // Throwaway variables
+    SDL_Rect rect;
+    Ship *s;
     void **dp; // Dummy double pointer(no immature jokes)
 
-    collisionHolder = ArrayNew();
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -134,7 +138,7 @@ int main(int argc, char **argv)
                             if (SDL_PointInRect(&mouse_pos, &rect))
                             {
                                 selected_ship = s;
-                                ANNIHILATE_TEXTURE(selected_texture);
+                                DESTROY_SDL_TEXTURE(selected_texture);
                             }
                         }
                     }
@@ -149,6 +153,10 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_G:
                     {
+                        Ship *bullet = CreateGenericShip(1, 6, RIGHT);
+                        bullet->type = BULLET;
+                        ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
+                        ArrayAppend(goodBullets, bullet);
                         flags.goob = ~flags.goob;
                         break;
                     }
@@ -199,13 +207,23 @@ int main(int argc, char **argv)
                 else if (selection == TURN_LEFT)
                     TurnLeft(player);
                 else if (selection == SHOOT)
-                    ShootGamer(player);
+                {
+                    Ship *bullet = CreateGenericShip(1, 6, RIGHT);
+                    if (bullet)
+                    {
+                        bullet->type = BULLET;
+                        ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
+                        ArrayAppend(goodBullets, bullet);
+                    }
+                }
+                ArrayIterate(goodBullets, MoveShip);
                 selection = NO_ACTION;
 
                 // Switch turn
                 turn = AI_BUFFER;
                 turnTimer = SDL_GetTicks();
                 flags.switchTurn = 0;
+                flags.doCollision = 1;
             }
         }
         if (frameStartTick - turnTimer > userSettings.turnDelay)
@@ -221,14 +239,17 @@ int main(int argc, char **argv)
         // AI turn handling
         if (turn == AI)
         {
+            // Move all units
+            // Build a table of their positions, killing duplicates
+
             turn = PLAYER_BUFFER;
             turnTimer = frameStartTick;
 
             ArrayIterate(ships, ActivateShip);      // Activate enemies
             ArrayIterate(badBullets, ActivateShip); // Activate bullets
 
-            ArrayReserve(collisionHolder, NumTiles());
             ArrayClear(collisionHolder);
+            ArrayReserve(collisionHolder, NumTiles());
             // TODO: Make this not bad
             // There is heap corruption afoot
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
@@ -331,10 +352,12 @@ int main(int argc, char **argv)
             SDL_Delay(FPS_LIMIT_RATE);
 #endif // UNLIMITED_FPS
     }
+    printf("Cleanup has started.\n");
     FreeShipImages();
     CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);
     ArrayAnnihilate(&badBullets, CleanupShip);
+    ArrayAnnihilate(&goodBullets, CleanupShip);
     DestroyShip(player);
     return 0;
 }
