@@ -102,9 +102,9 @@ int main(int argc, char **argv)
 
     // Throwaway variables
     SDL_Rect rect;
-    Ship *s;
-    void **dp; // Dummy double pointer(no immature jokes)
-
+    Ship *s = NULL;
+    void **dp = NULL; // Dummy double pointer(no immature jokes)
+    printf("%p\n", &goodBullets);
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -208,15 +208,11 @@ int main(int argc, char **argv)
                     TurnLeft(player);
                 else if (selection == SHOOT)
                 {
-                    Ship *bullet = CreateGenericShip(1, 6, RIGHT);
+                    Ship *bullet = CreateBullet(1, 6, RIGHT);
                     if (bullet)
-                    {
-                        bullet->type = BULLET;
-                        ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
                         ArrayAppend(goodBullets, bullet);
-                    }
                 }
-                ArrayIterate(goodBullets, MoveShip);
+                ArrayIterate(goodBullets, ActivateShip);
                 selection = NO_ACTION;
 
                 // Switch turn
@@ -268,6 +264,14 @@ int main(int argc, char **argv)
                     if ((dp = ArrayReference(collisionHolder, location)))
                         *dp = (void*) s;
                 }
+            }
+            for (unsigned int y = 0; y < GameField.height; y++)
+            {
+                for (unsigned int x = 0; x < GameField.width; x++)
+                {
+                    printf("%8p ", ArrayElement(collisionHolder, IndexFromLocation(x, y)));
+                }
+                printf("\n");
             }
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
@@ -341,6 +345,7 @@ int main(int argc, char **argv)
             OutlineTile(3, 1);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(badBullets, DrawShip);
+        //ArrayIterate(goodBullets, DrawShip);
         DrawButton(button);
 
         DebugDisplayDraw();
@@ -359,7 +364,7 @@ int main(int argc, char **argv)
     ArrayAnnihilate(&badBullets, CleanupShip);
     ArrayAnnihilate(&goodBullets, CleanupShip);
     DestroyShip(player);
-    return 0;
+    return VerifyShipsFreed();
 }
 
 /** ANYTHING BELOW THIS LINE IS TEMPORARY AND SHOULD NOT REMAIN HERE **/

@@ -37,6 +37,7 @@ typedef struct __ship
 
 /** Standard Functions **/
 int InTileShip(uint8_t x, uint8_t y, Ship *ship);
+int VerifyShipsFreed();
 
 void DestroyShip(Ship *ship);
 void VerifyShip(Ship *ship);

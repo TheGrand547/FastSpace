@@ -199,6 +199,7 @@ void ArrayReserve(Array *array, size_t size)
     if (!array || array->size >= size)
         return;
     array->array = realloc(array->array, size * sizeof(void*));
+    memset(array->array + array->length, 0, size - array->length);
     array->size = size;
 }
 

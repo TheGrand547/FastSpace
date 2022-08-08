@@ -33,6 +33,11 @@ int InTileShip(uint8_t x, uint8_t y, Ship *ship)
     return (ship->x == x) && (ship->y == y);
 }
 
+int VerifyShipsFreed()
+{
+    return shipCount;
+}
+
 void DestroyShip(Ship *ship)
 {
     if (ship->name)
