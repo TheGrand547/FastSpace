@@ -80,6 +80,11 @@ SDL_Point ShipNextTile(Ship *ship)
 
 }
 
+#define DEFAULT_TOUGHNESS 5
+#define DEFAULT_COUNTER 0
+#define DATA_NULL NULL
+#define NAME_NULL NULL
+
 Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
 {
     if (x > GameField.width || y > GameField.height)
@@ -95,7 +100,7 @@ Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
         shipCount--;
         return NULL;
     }
-    *ship = (Ship) {x, y, facing, NONE_SHIP, 0, NO_ACTION,
-                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, NULL, NULL};
+    *ship = (Ship) {x, y, facing, NONE_SHIP, DEFAULT_COUNTER, DEFAULT_TOUGHNESS, NO_ACTION,
+                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, DATA_NULL, NAME_NULL};
     return ship;
 }

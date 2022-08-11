@@ -273,6 +273,7 @@ Ship *CreateBullet(uint8_t x, uint8_t y, Facing facing)
     {
         bullet->counter = 0;
         bullet->type = BULLET;
+        bullet->toughness = 14;
     }
     return bullet;
 }

@@ -21,6 +21,7 @@ void ArrayReserve(Array *array, size_t size);
 void ArrayInsert(Array *array, size_t index, void *data);
 void ArrayAppend(Array *array, void *data);
 void ArrayClear(Array *array);
+void ArrayClearWithoutResize(Array *array);
 void ArrayDeleteRange(Array *array, size_t start, size_t end);
 void **ArrayRemove(Array *array, size_t index);
 void **ArrayReference(Array *array, size_t index);

@@ -28,6 +28,7 @@ typedef struct __ship
     uint8_t counter : 2;
     // Full uint8_t
     // Two bytes of uint8_t
+    uint8_t toughness : 4;
 
     Action previous; // 4 bytes, stores next action
     Color color; // 4 bytes

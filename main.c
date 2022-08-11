@@ -43,6 +43,8 @@ static Array *collisionHolder;
 static Array *goodBullets;
 // TODO: Have array of all the different arrays that hold ships so it can be easily tracked
 
+void temp_collision_thing(void *ship);
+
 int main(int argc, char **argv)
 {
     int loop = 1;
@@ -63,6 +65,7 @@ int main(int argc, char **argv)
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
 
     collisionHolder = ArrayNew();
+    ArrayReserve(collisionHolder, NumTiles());
     badBullets = ArrayNew();
     goodBullets = ArrayNew();
 
@@ -104,7 +107,9 @@ int main(int argc, char **argv)
     SDL_Rect rect;
     Ship *s = NULL;
     void **dp = NULL; // Dummy double pointer(no immature jokes)
-    printf("%p\n", &goodBullets);
+    UNUSED(dp);
+
+    printf("%p\n", (void*) &goodBullets);
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -208,7 +213,7 @@ int main(int argc, char **argv)
                     TurnLeft(player);
                 else if (selection == SHOOT)
                 {
-                    Ship *bullet = CreateBullet(1, 6, RIGHT);
+                    Ship *bullet = CreateBullet(player->x, player->y, RIGHT);
                     if (bullet)
                         ArrayAppend(goodBullets, bullet);
                 }
@@ -244,27 +249,12 @@ int main(int argc, char **argv)
             ArrayIterate(ships, ActivateShip);      // Activate enemies
             ArrayIterate(badBullets, ActivateShip); // Activate bullets
 
-            ArrayClear(collisionHolder);
-            ArrayReserve(collisionHolder, NumTiles());
+            ArrayClearWithoutResize(collisionHolder);
             // TODO: Make this not bad
             // There is heap corruption afoot
-            for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
-            {
-                s = (Ship*) ArrayElement(badBullets, i);
-                if (!s)
-                    continue;
-                size_t location = (size_t) IndexFromLocation(s->x, s->y);
-                Ship *s2 = ArrayElement(collisionHolder, location);
-                if (s2)
-                {
-                    printf("There was a collision at %u %u\n", s->x, s->y);
-                }
-                else
-                {
-                    if ((dp = ArrayReference(collisionHolder, location)))
-                        *dp = (void*) s;
-                }
-            }
+            ArrayIterate(goodBullets, temp_collision_thing);
+            ArrayIterate(badBullets, temp_collision_thing);
+            ArrayIterate(ships, temp_collision_thing);
             for (unsigned int y = 0; y < GameField.height; y++)
             {
                 for (unsigned int x = 0; x < GameField.width; x++)
@@ -345,7 +335,7 @@ int main(int argc, char **argv)
             OutlineTile(3, 1);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(badBullets, DrawShip);
-        //ArrayIterate(goodBullets, DrawShip);
+        ArrayIterate(goodBullets, DrawShip);
         DrawButton(button);
 
         DebugDisplayDraw();
@@ -368,6 +358,34 @@ int main(int argc, char **argv)
 }
 
 /** ANYTHING BELOW THIS LINE IS TEMPORARY AND SHOULD NOT REMAIN HERE **/
+
+void temp_collision_thing(void *ship)
+{
+    NULL_CHECK(ship);
+    Ship *s = (Ship*) ship;
+    void **dp;
+    size_t location = (size_t) IndexFromLocation(s->x, s->y);
+    Ship *s2 = ArrayElement(collisionHolder, location);
+    if (s2)
+    {
+        printf("There was a collision at %u %u\n", s->x, s->y);
+        // Weaker ship gets destroyed
+        if (s2->toughness < s->toughness)
+        {
+            dp = ArrayReference(collisionHolder, location);
+            *dp = (void*) s;
+        }
+        else
+        {
+            printf("TODO: Make explosion if the thingy you know\n");
+        }
+    }
+    else
+    {
+        if ((dp = ArrayReference(collisionHolder, location)))
+            *dp = (void*) s;
+    }
+}
 
 // Bullet hackiness is here
 void ShootGamer(Ship *ship)

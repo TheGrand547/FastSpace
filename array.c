@@ -43,10 +43,17 @@ void ArrayDestroy(Array *array)
 
 void ArrayClear(Array *array)
 {
-    if (!array)
+    if (!array && array->array)
+        return;
+    ArrayClearWithoutResize(array);
+    array->length = 0;
+}
+
+void ArrayClearWithoutResize(Array *array)
+{
+    if (!array && array->array)
         return;
     memset(array->array, 0, array->size * sizeof(void*));
-    array->length = 0;
 }
 
 void ArrayAnnihilate(Array **array, ArrayFunc clean)
@@ -63,10 +70,11 @@ void ArrayInsert(Array *array, size_t index, void *data)
 {
     if (!array)
         return;
-    if (index >= ArraySize(array))
+    if (index >= array->size)
         ArrayAppend(array, data);
     else
     {
+        // TODO: Verify location
         memmove(array->array + index + 1, array->array + index, (array->length - index) * sizeof(void*));
         array->array[index] = data;
         array->length++;
@@ -198,8 +206,9 @@ void ArrayReserve(Array *array, size_t size)
 {
     if (!array || array->size >= size)
         return;
-    array->array = realloc(array->array, size * sizeof(void*));
-    memset(array->array + array->length, 0, size - array->length);
+    size_t elements = exp2(ceil(log2(size ? size : 1)));
+    array->array = realloc(array->array, elements * sizeof(void*));
+    memset(array->array + array->length, 0, elements - array->length);
     array->size = size;
 }
 
