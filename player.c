@@ -18,7 +18,8 @@ ShipImageDataFunction(PlayerImageData)
 typedef struct {
 } player_data;
 */
-
+// TODO: Player will have 'power cells' or something that will allow them to do special things
+// Such as 180 turns, idk what else but things like that, maybe repairs
 
 Ship *CreatePlayer(uint8_t x, uint8_t y, Facing facing)
 {

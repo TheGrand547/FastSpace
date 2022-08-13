@@ -28,6 +28,9 @@
 
 #define SPACING 5
 
+#define SET_FLAG 1
+#define CLEAR_FLAG 0
+
 SDL_Renderer *GameRenderer;
 SDL_Window *GameWindow;
 Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, SPACING, SPACING, SPACING};
@@ -70,8 +73,8 @@ int main(int argc, char **argv)
     goodBullets = ArrayNew();
 
     printf("player\n");
-    ArrayAppend(ships, CreateCircle(5, 6, LEFT));
-    ArrayAppend(ships, CreateCircle(4, 3, RIGHT));
+    ArrayAppend(ships, CreateCircle(2, 4, RIGHT));
+    ArrayAppend(ships, CreateCircle(8, 4, LEFT));
 
     ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     SDL_Event e;
@@ -89,11 +92,12 @@ int main(int argc, char **argv)
         uint8_t doCollision : 1;
         uint8_t goob : 1;
     } flags;
-    flags.windowSize = 1;
-    flags.switchTurn = 0;
-    flags.bufferState = 0;
-    flags.doCollision = 0;
+    flags.windowSize = SET_FLAG;
+    flags.switchTurn = CLEAR_FLAG;
+    flags.bufferState = CLEAR_FLAG;
+    flags.doCollision = CLEAR_FLAG;
 
+    // Why the hell did I do things like this
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
     EnableDebugDisplay(SHOW_TURN, TOP_RIGHT, &turn);
 
@@ -130,7 +134,7 @@ int main(int argc, char **argv)
             {
                 // This is a hack
                 if (turnAdvance && ButtonCheck(button, &e))
-                    flags.switchTurn = 1;
+                    flags.switchTurn = SET_FLAG;
                 else if (e.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_Point mouse_pos = (SDL_Point) {e.button.x, e.button.y};
@@ -158,11 +162,11 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_G:
                     {
-                        Ship *bullet = CreateGenericShip(1, 6, RIGHT);
-                        bullet->type = BULLET;
+                        flags.goob = ~flags.goob;
+                        Ship *bullet = CreateBullet(1, 6, RIGHT);
+                        NULL_CONTINUE(bullet);
                         ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
                         ArrayAppend(goodBullets, bullet);
-                        flags.goob = ~flags.goob;
                         break;
                     }
                     case SDL_SCANCODE_A:
@@ -182,11 +186,11 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_O:
                         GameField.spacing += 2;
-                        flags.windowSize = 1;
+                        flags.windowSize = SET_FLAG;
                         break;
                     case SDL_SCANCODE_L:
                         GameField.spacing -= 2;
-                        flags.windowSize = 1;
+                        flags.windowSize = SET_FLAG;
                         break;
                     default:
                         break;
@@ -197,12 +201,12 @@ int main(int argc, char **argv)
         {
             if (flags.windowSize)
             {
-                if (!GameField.spacing)
-                    GameField.spacing = 1;
-                flags.windowSize = 0;
+                if (!GameField.spacing || !(GameField.spacing & 1))
+                    GameField.spacing += 1;
                 SDL_SetWindowSize(GameWindow, WindowSizeX(), WindowSizeY());
                 button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
                 button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
+                flags.windowSize = CLEAR_FLAG;
             }
             if (flags.switchTurn)
             {
@@ -223,8 +227,20 @@ int main(int argc, char **argv)
                 // Switch turn
                 turn = AI_BUFFER;
                 turnTimer = SDL_GetTicks();
-                flags.switchTurn = 0;
-                flags.doCollision = 1;
+                flags.switchTurn = CLEAR_FLAG;
+                flags.doCollision = SET_FLAG;
+            }
+            if (flags.doCollision)
+            {
+                ArrayClearWithoutResize(collisionHolder); // Clear the array
+
+                // Add all game objects to the array thing
+                temp_collision_thing((void*) player);
+                ArrayIterate(goodBullets, temp_collision_thing);
+                ArrayIterate(badBullets, temp_collision_thing);
+                ArrayIterate(ships, temp_collision_thing);
+
+                flags.doCollision = CLEAR_FLAG;
             }
         }
         if (frameStartTick - turnTimer > userSettings.turnDelay)
@@ -250,8 +266,6 @@ int main(int argc, char **argv)
             ArrayIterate(badBullets, ActivateShip); // Activate bullets
 
             ArrayClearWithoutResize(collisionHolder);
-            // TODO: Make this not bad
-            // There is heap corruption afoot
             ArrayIterate(goodBullets, temp_collision_thing);
             ArrayIterate(badBullets, temp_collision_thing);
             ArrayIterate(ships, temp_collision_thing);
@@ -263,6 +277,7 @@ int main(int argc, char **argv)
                 }
                 printf("\n");
             }
+            // TODO: Make this not bad
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
                 s = (Ship*) ArrayElement(badBullets, i);
@@ -340,6 +355,7 @@ int main(int argc, char **argv)
 
         DebugDisplayDraw();
 
+
         // End of frame stuff
         SDL_RenderPresent(GameRenderer);
 #ifndef UNLIMITED_FPS
@@ -368,11 +384,11 @@ void temp_collision_thing(void *ship)
     Ship *s2 = ArrayElement(collisionHolder, location);
     if (s2)
     {
+        // TODO: Need more ship functions to determine what happens when things collide
         printf("There was a collision at %u %u\n", s->x, s->y);
         // Weaker ship gets destroyed
-        if (s2->toughness < s->toughness)
+        if (s2->toughness < s->toughness && (dp = ArrayReference(collisionHolder, location)))
         {
-            dp = ArrayReference(collisionHolder, location);
             *dp = (void*) s;
         }
         else
@@ -390,6 +406,7 @@ void temp_collision_thing(void *ship)
 // Bullet hackiness is here
 void ShootGamer(Ship *ship)
 {
+    NULL_CHECK(ship);
     Ship *bullet = CreateBullet(ship->x, ship->y, ship->facing);
     NULL_CHECK(bullet);
     // I know this is a temp function, but you really need to always check your damn pointers

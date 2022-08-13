@@ -5,8 +5,11 @@
 
 struct Array;
 typedef struct Array Array;
-typedef void(*ArrayFunc)(void*);
-typedef int(*ArrayCriteria)(void*);
+typedef size_t (*ArrayCriteria)(void*);
+typedef void (*ArrayFunc)(void*);
+
+size_t null_non_zero(void *data);
+void dummy(void *data);
 
 Array* ArrayCreate(size_t size);
 void ArrayCleanup(Array *array, ArrayFunc clean);
@@ -18,6 +21,10 @@ void ArrayAnnihilate(Array **array, ArrayFunc clean);
 size_t ArrayLength(Array *array);
 size_t ArraySize(Array *array);
 void ArrayReserve(Array *array, size_t size);
+
+void ArrayKillNonZero(Array *array, ArrayCriteria critera, ArrayFunc cleanup);
+#define ArrayRemoveNonZero(array, criteria) ArrayKillNonZero(array, criteria, dummy)
+#define ArrayRemoveNulls(array) ArrayKillNonZero(array, null_non_zero, dummy)
 void ArrayInsert(Array *array, size_t index, void *data);
 void ArrayAppend(Array *array, void *data);
 void ArrayClear(Array *array);

@@ -12,13 +12,14 @@
 #define UNUSED(x) (void)(x)
 #define FLOAT_EPSILON 0.0001
 #define FLOAT_EQUAL(x, y) (fabs((x) - (y)) < FLOAT_EPSILON)
-#define NULL_CHECK(x) if (!x) return;
-#define NULL_CHECK_RETURN(x, ret) if (!x) return ret;
+#define NULL_CHECK(x) if (!x) return
+#define NULL_CONTINUE(x) if (!x) continue
+#define NULL_CHECK_RETURN(x, ret) if (!x) return ret
 #define SAFE_STATIC_ARRAY_LENGTH(array, type) sizeof(array) / sizeof(type)
 #define STATIC_ARRAY_LENGTH(array) sizeof(array) / sizeof(array[0])
 
 // SDL2 defines
-#define DESTROY_SDL_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL;
+#define DESTROY_SDL_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define R_MASK 0xFF000000

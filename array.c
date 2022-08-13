@@ -22,6 +22,18 @@ Array* ArrayCreate(size_t size)
     return array;
 }
 
+// Returns zero if pointer is null, otherwise non-zero
+size_t null_non_zero(void *data)
+{
+    return (size_t) data;
+}
+
+// Empty 'free'
+void dummy(void *data)
+{
+    (void) data;
+}
+
 size_t ArrayLength(Array *array)
 {
     return array ? array->length : 0;
@@ -219,4 +231,24 @@ void ArrayCleanup(Array *array, ArrayFunc clean)
         ArrayIterate(array, clean);
         array->length = 0;
     }
+}
+
+void ArrayKillNonZero(Array *array, ArrayCriteria criteria, ArrayFunc cleanup)
+{
+    if (!array || !array->array)
+        return;
+    size_t index = 0;
+    for (size_t i = 0; i < array->length; i++)
+    {
+        void *element = array->array[i];
+        if (!criteria(element))
+        {
+            array->array[index++] = element;
+        }
+        else
+        {
+            cleanup(element);
+        }
+    }
+    array->length = index;
 }
