@@ -27,8 +27,9 @@ typedef struct __ship
     uint8_t type : 4;
     uint8_t counter : 2;
     // Full uint8_t
-    // Two bytes of uint8_t
+
     uint8_t toughness : 4;
+    uint8_t shields : 4;
 
     Action previous; // 4 bytes, stores next action
     Color color; // 4 bytes
@@ -47,6 +48,8 @@ void MoveShip(Ship *ship);
 void TurnRight(Ship *ship);
 void TurnLeft(Ship *ship);
 void TurnAround(Ship *ship);
+
+void DrawNumbers(Ship *ship);
 
 void ColorShip(Ship *ship, uint32_t color);
 

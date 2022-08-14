@@ -318,4 +318,5 @@ static void DrawShipType(Ship *ship)
         angle = 90;
     SetTextureColorMod(texture, ship->color);
     SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
+    DrawNumbers(ship);
 }

@@ -302,11 +302,7 @@ SDL_Texture *FontRenderChar(SDL_Renderer *renderer, unsigned char ch)
 {
     if (CHAR_BOUNDS_CHECK(ch))
         return NULL;
-    size_t index = FontTransformChar(ch);
-    if (CharTextures[index])
-        return CharTextures[index];
-    CharTextures[index] = SDL_CreateTextureFromSurface(renderer, CharSurface(ch));
-    return CharTextures[index];
+    return SDL_CreateTextureFromSurface(renderer, CharSurface(ch));
 }
 
 SDL_Texture *FontRenderText(SDL_Renderer *renderer, const char *string, size_t size)

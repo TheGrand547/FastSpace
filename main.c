@@ -378,8 +378,10 @@ int main(int argc, char **argv)
 void temp_collision_thing(void *ship)
 {
     NULL_CHECK(ship);
+    // These two will almost assuredly be in registers, can't see why they wouldn't
     Ship *s = (Ship*) ship;
     void **dp;
+
     size_t location = (size_t) IndexFromLocation(s->x, s->y);
     Ship *s2 = ArrayElement(collisionHolder, location);
     if (s2)

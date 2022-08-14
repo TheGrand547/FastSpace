@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "draw.h"
+#include "font.h"
 #include "player.h"
 #include "ship_types.h"
 
@@ -73,6 +74,28 @@ void ColorShip(Ship *ship, uint32_t color)
                 &ship->color.g, &ship->color.b, &ship->color.a);
 }
 
+void DrawNumbers(Ship *ship)
+{
+    SDL_Texture *texture;
+    SDL_Rect rect;
+    SDL_Rect tile = GetTile(ship->x, ship->y);
+    char buffer[4];
+    if (ship->toughness)
+    {
+        sprintf(buffer, "%X", ship->toughness);
+        // TODO: make the number not be magic
+        texture = FontRenderTextSize(GameRenderer, buffer, 10, &rect);
+        if (texture)
+        {
+            rect.x = tile.x;
+            rect.y = tile.y + tile.h - rect.h;
+            SDL_SetTextureColorMod(texture, 0x00, 0xFF, 0xFF);
+            SDL_RenderCopy(GameRenderer, texture, NULL, &rect);
+        }
+        DESTROY_SDL_TEXTURE(texture);
+    }
+}
+
 SDL_Point ShipNextTile(Ship *ship)
 {
     return (SDL_Point) {ship->x + FacingX((Facing) ship->facing),
@@ -81,6 +104,7 @@ SDL_Point ShipNextTile(Ship *ship)
 }
 
 #define DEFAULT_TOUGHNESS 5
+#define DEFAULT_SHIELDS 0
 #define DEFAULT_COUNTER 0
 #define DATA_NULL NULL
 #define NAME_NULL NULL
@@ -100,7 +124,7 @@ Ship *CreateGenericShip(uint8_t x, uint8_t y, Facing facing)
         shipCount--;
         return NULL;
     }
-    *ship = (Ship) {x, y, facing, NONE_SHIP, DEFAULT_COUNTER, DEFAULT_TOUGHNESS, NO_ACTION,
-                    (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, DATA_NULL, NAME_NULL};
+    *ship = (Ship) {x, y, facing, NONE_SHIP, DEFAULT_COUNTER, DEFAULT_TOUGHNESS, DEFAULT_SHIELDS,
+                    NO_ACTION, (SDL_Color){0xFF, 0x00, 0xFF, 0xFF}, DATA_NULL, NAME_NULL};
     return ship;
 }
