@@ -207,7 +207,7 @@ void ArrayDelete(Array *array, void *data)
     {
         if (*location == data)
         {
-            ArrayRemove(array, (int) (array->array - location));
+            ArrayRemove(array, (size_t) (array->array - location));
             return;
         }
         location++;

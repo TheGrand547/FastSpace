@@ -31,6 +31,12 @@
 #define SET_FLAG 1
 #define CLEAR_FLAG 0
 
+// TODO: it's clera why this is bad
+size_t check_if_pointer_exists_in_collision(void *data);
+void temp_collision_clean();
+void temp_collision_thing(void *ship);
+
+
 SDL_Renderer *GameRenderer;
 SDL_Window *GameWindow;
 Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, SPACING, SPACING, SPACING};
@@ -45,8 +51,6 @@ static Array *badBullets;
 static Array *collisionHolder;
 static Array *goodBullets;
 // TODO: Have array of all the different arrays that hold ships so it can be easily tracked
-
-void temp_collision_thing(void *ship);
 
 int main(int argc, char **argv)
 {
@@ -68,11 +72,15 @@ int main(int argc, char **argv)
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
 
     collisionHolder = ArrayNew();
-    ArrayReserve(collisionHolder, NumTiles());
     badBullets = ArrayNew();
     goodBullets = ArrayNew();
+    if (!collisionHolder || !badBullets || !goodBullets)
+    {
+        printf("Failure allocating arrays\n");
+        return -1;
+    }
+    ArrayReserve(collisionHolder, NumTiles());
 
-    printf("player\n");
     ArrayAppend(ships, CreateCircle(2, 4, RIGHT));
     ArrayAppend(ships, CreateCircle(8, 4, LEFT));
 
@@ -113,7 +121,7 @@ int main(int argc, char **argv)
     void **dp = NULL; // Dummy double pointer(no immature jokes)
     UNUSED(dp);
 
-    printf("%p\n", (void*) &goodBullets);
+    printf("%zu\n", sizeof(Ship));
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -217,9 +225,10 @@ int main(int argc, char **argv)
                     TurnLeft(player);
                 else if (selection == SHOOT)
                 {
+                    /*
                     Ship *bullet = CreateBullet(player->x, player->y, RIGHT);
                     if (bullet)
-                        ArrayAppend(goodBullets, bullet);
+                        ArrayAppend(goodBullets, bullet);*/
                 }
                 ArrayIterate(goodBullets, ActivateShip);
                 selection = NO_ACTION;
@@ -273,10 +282,15 @@ int main(int argc, char **argv)
             {
                 for (unsigned int x = 0; x < GameField.width; x++)
                 {
-                    printf("%8p ", ArrayElement(collisionHolder, IndexFromLocation(x, y)));
+                    printf("%08p ", ArrayElement(collisionHolder, IndexFromLocation(x, y)));
                 }
                 printf("\n");
             }
+            temp_collision_clean();
+            ArrayKillNonZero(badBullets, check_if_pointer_exists_in_collision, CleanupShip);
+
+
+            /*
             // TODO: Make this not bad
             for (unsigned int i = 0; i < ArrayLength(badBullets); i++)
             {
@@ -309,7 +323,7 @@ int main(int argc, char **argv)
                 {
                     CleanupShip(*ArrayRemove(badBullets, i--));
                 }
-            }
+            }*/
         }
 
         // Drawing
@@ -379,30 +393,53 @@ void temp_collision_thing(void *ship)
 {
     NULL_CHECK(ship);
     // These two will almost assuredly be in registers, can't see why they wouldn't
-    Ship *s = (Ship*) ship;
+    Ship *current = (Ship*) ship;
     void **dp;
 
-    size_t location = (size_t) IndexFromLocation(s->x, s->y);
-    Ship *s2 = ArrayElement(collisionHolder, location);
-    if (s2)
+    size_t location = (size_t) SHIP_INDEX_FROM_LOCATION(current);
+    Ship *existing = ArrayElement(collisionHolder, location);
+    if (existing)
     {
         // TODO: Need more ship functions to determine what happens when things collide
-        printf("There was a collision at %u %u\n", s->x, s->y);
-        // Weaker ship gets destroyed
-        if (s2->toughness < s->toughness && (dp = ArrayReference(collisionHolder, location)))
+        // Ships with zero toughness will become explosions
+        // The the current one at the location is tougher, then swap them so the the math isn't repeated in my code
+        if (existing->toughness > current->toughness)
         {
-            *dp = (void*) s;
+            dp = (void**) &existing;
+            existing = current;
+            current = *dp;
         }
-        else
-        {
-            printf("TODO: Make explosion if the thingy you know\n");
-        }
+        // The survivor will then be reduced in toughness while
+        current->toughness -= existing->toughness;
+        current->collision += existing->toughness + existing->collision;
     }
     else
     {
-        if ((dp = ArrayReference(collisionHolder, location)))
-            *dp = (void*) s;
+        current->collision = 0;
     }
+    if ((dp = ArrayReference(collisionHolder, location)))
+        *dp = (void*) current;
+}
+
+void temp_collision_clean()
+{
+    for (size_t index = 0; index < NumTiles(); index++)
+    {
+        Ship *current = ArrayElement(collisionHolder, index);
+        if (current && !current->toughness)
+        {
+            // Will become where explosions are placed, but until then that element will just be removed
+            printf("WE NEED AN EXPLOSION 'ERE %u %u", current->x, current->y);
+            *ArrayReference(collisionHolder, index) = NULL;
+        }
+    }
+}
+
+size_t check_if_pointer_exists_in_collision(void *data)
+{
+    NULL_CHECK_RETURN(data, 0);
+    Ship *ship = (Ship*) data;
+    return ArrayElement(collisionHolder, SHIP_INDEX_FROM_LOCATION(ship)) != data;
 }
 
 // Bullet hackiness is here

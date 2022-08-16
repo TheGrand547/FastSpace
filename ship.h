@@ -30,12 +30,19 @@ typedef struct __ship
 
     uint8_t toughness : 4;
     uint8_t shields : 4;
+    // Full uint8_t
+
+    uint8_t dummy; // Unused but required so the uint16 will be on a 2-byte boundary
+
+    uint16_t collision; // toughness is 4 bits, up to 4 collisions in a tile, need 16 bits to store
 
     Action previous; // 4 bytes, stores next action
     Color color; // 4 bytes
     void *data; // 8 bytes, data pointer
     char *name; // 8 bytes
 } Ship;
+
+#define SHIP_INDEX_FROM_LOCATION(ship) IndexFromLocation(ship->x, ship->y)
 
 /** Standard Functions **/
 int InTileShip(uint8_t x, uint8_t y, Ship *ship);

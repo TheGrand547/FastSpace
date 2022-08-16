@@ -273,8 +273,8 @@ SDL_Point FontGetTextSize(const char *string, size_t scale)
         size.y = 1;
     }
     // Subtract the trailing spacing
-    size.x = (size.x * GetXDelta(scale)) - scale * sizeConst * (charHorizontalSpacing - 1);
-    size.y = (size.y * GetYDelta(scale)) - scale * (charVerticalSpacing - 1);
+    size.x = (size.x * GetXDelta(scale)) - (int) (scale * sizeConst * (charHorizontalSpacing - 1));
+    size.y = (size.y * GetYDelta(scale)) - (int) (scale * (charVerticalSpacing - 1));
     return size;
 }
 

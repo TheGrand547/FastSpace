@@ -13,7 +13,7 @@ SDL_Rect GetTile(uint8_t x, uint8_t y)
 
 unsigned int IndexFromLocation(uint8_t x, uint8_t y)
 {
-    return x + y * GameField.width;
+    return (x + y * GameField.width) % NumTiles();
 }
 
 unsigned int NumTiles()
