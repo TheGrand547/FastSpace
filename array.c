@@ -3,6 +3,8 @@
 #include <math.h>
 #include <string.h>
 
+#define NULL_INT 0
+
 typedef struct Array
 {
     void **array;
@@ -65,7 +67,7 @@ void ArrayClearWithoutResize(Array *array)
 {
     if (!array && array->array)
         return;
-    memset(array->array, 0, array->size * sizeof(void*));
+    memset(array->array, NULL_INT, array->size * sizeof(void*));
 }
 
 void ArrayAnnihilate(Array **array, ArrayFunc clean)
@@ -220,7 +222,7 @@ void ArrayReserve(Array *array, size_t size)
         return;
     size_t elements = exp2(ceil(log2(size ? size : 1)));
     array->array = realloc(array->array, elements * sizeof(void*));
-    memset(array->array + array->length, 0, elements - array->length);
+    memset(array->array + array->length, NULL_INT, (elements - array->length) * sizeof(void*));
     array->size = size;
 }
 

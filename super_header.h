@@ -18,6 +18,8 @@
 #define SAFE_STATIC_ARRAY_LENGTH(array, type) sizeof((array)) / sizeof((type))
 #define STATIC_ARRAY_LENGTH(array) sizeof((array)) / sizeof((array)[0])
 
+#define NULL_INT 0
+
 // SDL2 defines
 #define DESTROY_SDL_TEXTURE(x) if (x) SDL_DestroyTexture(x); x = NULL
 

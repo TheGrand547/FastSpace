@@ -209,9 +209,6 @@ int main(int argc, char **argv)
         // AI turn handling
         if (turn == AI)
         {
-            // Move all units
-            // Build a table of their positions, killing duplicates
-
             turn = PLAYER_BUFFER;
             turnTimer = frameStartTick;
 
@@ -256,7 +253,7 @@ int main(int argc, char **argv)
             }
             if (flags.doCollision)
             {
-                memset(collisionHolder, 0, NumTiles()); // Clear the array
+                memset(collisionHolder, NULL_INT, NumTiles() * sizeof(void*)); // Clear the array
 
                 // Add all game objects to the array thing
                 temp_collision_thing((void*) player);
