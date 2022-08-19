@@ -42,7 +42,7 @@ typedef struct __ship
     char *name; // 8 bytes
 } Ship;
 
-#define SHIP_INDEX_FROM_LOCATION(ship) IndexFromLocation(ship->x, ship->y)
+#define SHIP_INDEX_FROM_LOCATION(ship) IndexFromLocation((ship)->x, (ship)->y)
 
 /** Standard Functions **/
 int InTileShip(uint8_t x, uint8_t y, Ship *ship);

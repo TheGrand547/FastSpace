@@ -14,7 +14,7 @@ void dummy(void *data);
 Array* ArrayCreate(size_t size);
 void ArrayCleanup(Array *array, ArrayFunc clean);
 void ArrayAnnihilate(Array **array, ArrayFunc clean);
-#define ArrayPurge(array) ArrayAnnihilate(array, free)
+#define ArrayPurge(array) ArrayAnnihilate((array), free)
 
 #define ArrayNew() ArrayCreate(1)
 
@@ -23,8 +23,8 @@ size_t ArraySize(Array *array);
 void ArrayReserve(Array *array, size_t size);
 
 void ArrayKillNonZero(Array *array, ArrayCriteria critera, ArrayFunc cleanup);
-#define ArrayRemoveNonZero(array, criteria) ArrayKillNonZero(array, criteria, dummy)
-#define ArrayRemoveNulls(array) ArrayKillNonZero(array, null_non_zero, dummy)
+#define ArrayRemoveNonZero(array, criteria) ArrayKillNonZero((array), (criteria), (dummy))
+#define ArrayRemoveNulls(array) ArrayKillNonZero((array), (null_non_zero), (dummy))
 void ArrayInsert(Array *array, size_t index, void *data);
 void ArrayAppend(Array *array, void *data);
 void ArrayClear(Array *array);
