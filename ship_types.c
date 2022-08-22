@@ -25,6 +25,7 @@ const char *HumanReadableStringFrom(Action action)
 
 // TODO: Make logger with freopen() on stderr
 
+static void DrawShipImage(Ship *ship, SDL_Texture *texture);
 static void DrawShipType(Ship *ship);
 
 struct ShipData
@@ -58,7 +59,6 @@ static struct ShipData ShipsData[LAST_SHIP] = {
         NULL,
         "Patroller"
     }, // Circle ship
-
     {
         CreatePlayer,
         ActivatePlayer,
@@ -85,7 +85,16 @@ static struct ShipData ShipsData[LAST_SHIP] = {
         NoneImageData,
         NULL,
         "Dizzyman"
-    } // Going to be the looper
+    }, // Going to be the looper
+    {
+        CreateExplosion,
+        ActivateExplosion,
+        FreeExplosion,
+        DrawExplosion,
+        NoneImageData,
+        NULL,
+        NULL,
+    }
 };
 
 #define NUM_SHIP_TYPES STATIC_ARRAY_LENGTH(ShipsData)
@@ -293,19 +302,77 @@ void DrawBullet(Ship *ship)
     }
 }
 
+#define EXPLOSION_NUM 8
+#define TRIANGLE 3
+#define EXPLOSION_VERTICIES EXPLOSION_NUM * TRIANGLE
+#define EXPLOSION_TEXTURE_SIZE 100
+
+/** Explosion **/
+Ship *CreateExplosion(uint8_t x, uint8_t y, Facing facing)
+{
+    Ship *ship = CreateGenericShip(x, y, facing);
+    if (ship)
+{
+        ship->type = EXPLOSION;
+        ship->counter = 2;
+        ship->color = (SDL_Color) {0xFF, 0xFF, 0xFF, 0xFF};
+    }
+    return ship;
+}
+
+Action ActivateExplosion(Ship *ship)
+{
+    UNUSED(ship);
+    return OVERRIDE;
+}
+
+void FreeExplosion(Ship *ship)
+{
+    DESTROY_SDL_TEXTURE(ship->data);
+    FreeShip(ship);
+}
+
+void DrawExplosion(Ship *ship)
+{
+    if (ship->data)
+        DrawShipImage(ship, (SDL_Texture*) ship->data);
+    else
+    {
+        // 100 x 100 should provide 'good enough' resolution
+        SDL_Texture *texture = SDL_CreateTexture(GameRenderer, SDL_PIXELFORMAT_RGBA32,
+                                                 SDL_TEXTUREACCESS_TARGET,
+                                                 EXPLOSION_TEXTURE_SIZE, EXPLOSION_TEXTURE_SIZE);
+        if (texture)
+        {
+            SDL_Vertex verts[EXPLOSION_VERTICIES];
+            SDL_Color colors[3] = {
+                {0xFF, 0x00, 0x00, 0x80}, // Red
+                {0xFF, 0xFF, 0x00, 0x30}, // Yellow
+                {0xFF, 0x7F, 0x00, 0x60} // Orange
+            };
+            SDL_FPoint empty = {0.0f, 0.0f};
+            for (unsigned int i = 0; i < EXPLOSION_VERTICIES; i++)
+            {
+                verts[i].position = (SDL_FPoint) {rand() % EXPLOSION_TEXTURE_SIZE,
+                                                  rand() % EXPLOSION_TEXTURE_SIZE};
+                verts[i].color = colors[rand() % 3];
+                verts[i].tex_coord = empty;
+            }
+            SDL_SetRenderTarget(GameRenderer, texture);
+            SDL_RenderGeometry(GameRenderer, NULL, verts, EXPLOSION_VERTICIES, NULL, 0);
+            SDL_SetRenderTarget(GameRenderer, NULL);
+
+            ship->data = (void*) texture;
+        }
+    }
+}
+
 //** Internal Drawing Methods **//
 
-static void DrawShipType(Ship *ship)
+static void DrawShipImage(Ship *ship, SDL_Texture *texture)
 {
+    NULL_CHECK(texture);
     SDL_Rect rect = GetTile(ship->x, ship->y);
-    SDL_Texture *texture = ShipsData[ship->type].texture;
-    if (!texture)
-    {
-        if (ShipsData[ship->type].imageData)
-            LoadShipimage(GameRenderer, ship->type);
-        DrawBlankShip(ship);
-        return;
-    }
     SDL_RendererFlip flip = SDL_FLIP_NONE;
     Facing facing = ship->facing;
     double angle = 0;
@@ -319,4 +386,17 @@ static void DrawShipType(Ship *ship)
     SetTextureColorMod(texture, ship->color);
     SDL_RenderCopyEx(GameRenderer, texture, NULL, &rect, angle, NULL, flip);
     DrawNumbers(ship);
+}
+
+static void DrawShipType(Ship *ship)
+{
+    SDL_Texture *texture = ShipsData[ship->type].texture;
+    if (!texture)
+    {
+        if (ShipsData[ship->type].imageData)
+            LoadShipimage(GameRenderer, ship->type);
+        DrawBlankShip(ship);
+        return;
+    }
+    DrawShipImage(ship, texture);
 }

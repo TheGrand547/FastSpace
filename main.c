@@ -49,6 +49,7 @@ static struct
 
 static Array *badBullets;
 static Array *goodBullets;
+static Array *miscShips;
 static void **collisionHolder;
 
 // TODO: Have array of all the different arrays that hold ships so it can be easily tracked
@@ -67,6 +68,23 @@ int main(int argc, char **argv)
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 
+    /*
+    SDL_RendererInfo info;
+    *
+    for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
+    {
+        SDL_GetRenderDriverInfo(i, &info);
+        printf("Renderer Name: %s\n", info.name);
+        printf("%s %i\n", STR(SDL_RENDERER_ACCELERATED), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
+        printf("%s %i\n", STR(SDL_RENDERER_SOFTWARE), (info.flags & SDL_RENDERER_SOFTWARE) > 0);
+        printf("%s %i\n", STR(SDL_RENDERER_PRESENTVSYNC), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
+        printf("%s %i\n", STR(SDL_RENDERER_TARGETTEXTURE), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
+    }*
+    SDL_GetRendererInfo(GameRenderer, &info);
+    printf("Renderer Name: %s\n", info.name);
+    printf("Render to Texture: %i %i\n", info.flags & SDL_RENDERER_TARGETTEXTURE, SDL_RENDERER_TARGETTEXTURE);*/
+
+
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
 
@@ -75,7 +93,8 @@ int main(int argc, char **argv)
     collisionHolder = calloc(NumTiles(), sizeof(void*));
     badBullets = ArrayNew();
     goodBullets = ArrayNew();
-    if (!collisionHolder || !badBullets || !goodBullets)
+    miscShips = ArrayNew();
+    if (!collisionHolder || !badBullets || !goodBullets || !miscShips)
     {
         printf("Failure allocating arrays\n");
         return -1;
@@ -83,6 +102,7 @@ int main(int argc, char **argv)
 
     ArrayAppend(ships, CreateCircle(2, 4, RIGHT));
     ArrayAppend(ships, CreateCircle(8, 4, LEFT));
+    ArrayAppend(ships, CreateExplosion(3, 3, RIGHT));
 
     ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     SDL_Event e;
@@ -121,7 +141,6 @@ int main(int argc, char **argv)
     void **dp = NULL; // Dummy double pointer(no immature jokes)
     UNUSED(dp);
 
-    printf("%zu\n", sizeof(Ship));
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -213,7 +232,8 @@ int main(int argc, char **argv)
             turnTimer = frameStartTick;
 
             ArrayIterate(ships, ActivateShip);      // Activate enemies
-            ArrayIterate(badBullets, ActivateShip); // Activate bullets
+            ArrayIterate(badBullets, ActivateShip); // Activate enemy bullets
+
             flags.doCollision = SET_FLAG;
         }
 
@@ -326,6 +346,7 @@ int main(int argc, char **argv)
         if (flags.goob)
             OutlineTile(3, 1);
         ArrayIterate(ships, DrawShip);
+        ArrayIterate(miscShips, DrawShip);
         ArrayIterate(badBullets, DrawShip);
         ArrayIterate(goodBullets, DrawShip);
         DrawButton(button);
@@ -346,6 +367,7 @@ int main(int argc, char **argv)
     ArrayAnnihilate(&ships, CleanupShip);
     ArrayAnnihilate(&badBullets, CleanupShip);
     ArrayAnnihilate(&goodBullets, CleanupShip);
+    ArrayAnnihilate(&miscShips, CleanupShip);
     DestroyShip(player);
     return VerifyShipsFreed();
 }
@@ -397,11 +419,16 @@ void temp_collision_clean()
     for (size_t index = 0; index < NumTiles(); index++)
     {
         Ship *current = (Ship*) collisionHolder[index];
-        if (current && !current->toughness)
+        if (current && !current->toughness && current->type != EXPLOSION)
         {
-            // Will become where explosions are placed, but until then that element will just be removed
-            printf("WE NEED AN EXPLOSION 'ERE %u %u\n", current->x, current->y);
-            collisionHolder[index] = NULL;
+            Ship *exp = CreateExplosion(current->x, current->y, RIGHT);
+            if (exp)
+            {
+                exp->toughness = (current->collision > 0xF) ? 0xF : current->collision;
+                ArrayAppend(miscShips, (void*) exp);
+            }
+            //printf("WE NEED AN EXPLOSION 'ERE %u %u\n", current->x, current->y);
+            collisionHolder[index] = exp;
         }
     }
 }

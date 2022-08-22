@@ -9,7 +9,13 @@ int FacingY(Facing facing);
 
 typedef enum
 {
-    TURN_LEFT, TURN_RIGHT, NO_ACTION, SHOOT, TURN_AROUND, NO_GENERIC_ACTION, OVERRIDE,
+    TURN_LEFT,
+    TURN_RIGHT,
+    NO_ACTION,
+    SHOOT,
+    TURN_AROUND,
+    NO_GENERIC_ACTION,
+    OVERRIDE,
     // Arbitrarily many others
 } Action;
 

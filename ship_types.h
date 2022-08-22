@@ -7,7 +7,13 @@ const char *HumanReadableStringFrom(Action action);
 
 typedef enum
 {
-    NONE_SHIP, CIRCLE, USER, BULLET, PATROLLER, LAST_SHIP // Up to 16 so it fits in Uint8 : 4
+    NONE_SHIP,
+    CIRCLE,
+    USER,
+    BULLET,
+    PATROLLER,
+    EXPLOSION,
+    LAST_SHIP // Up to 16 so it fits in Uint8 : 4
 } ShipType;
 
 //** External Setup/Cleanup Methods **//
@@ -46,6 +52,12 @@ Ship *CreateBullet(uint8_t, uint8_t y, Facing facing);
 Action ActivateBullet(Ship *ship);
 #define FreeBullet FreeShip
 void DrawBullet(Ship *ship);
+
+/** Explosion **/
+Ship *CreateExplosion(uint8_t x, uint8_t y, Facing facing);
+Action ActivateExplosion(Ship *ship);
+void FreeExplosion(Ship *ship);
+void DrawExplosion(Ship *ship);
 
 // Temporary testing stuff
 void ShootGamer(Ship *ship);
