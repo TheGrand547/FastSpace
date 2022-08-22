@@ -302,19 +302,24 @@ void DrawBullet(Ship *ship)
     }
 }
 
-#define EXPLOSION_NUM 8
+#define EXPLOSION_NUM 7
 #define TRIANGLE 3
-#define EXPLOSION_VERTICIES EXPLOSION_NUM * TRIANGLE
-#define EXPLOSION_TEXTURE_SIZE 100
+#define STAGES 3
+#define EXPLOSION_VERTICIES EXPLOSION_NUM * TRIANGLE * STAGES
+
+struct explosion
+{
+    SDL_Texture *textures[3];
+};
 
 /** Explosion **/
 Ship *CreateExplosion(uint8_t x, uint8_t y, Facing facing)
 {
     Ship *ship = CreateGenericShip(x, y, facing);
     if (ship)
-{
+    {
         ship->type = EXPLOSION;
-        ship->counter = 2;
+        ship->counter = STAGES;
         ship->color = (SDL_Color) {0xFF, 0xFF, 0xFF, 0xFF};
     }
     return ship;
@@ -322,27 +327,49 @@ Ship *CreateExplosion(uint8_t x, uint8_t y, Facing facing)
 
 Action ActivateExplosion(Ship *ship)
 {
-    UNUSED(ship);
+    if (ship->counter)
+        ship->counter--;
+    else
+        ship->toughness = 0;
     return OVERRIDE;
 }
 
 void FreeExplosion(Ship *ship)
 {
-    DESTROY_SDL_TEXTURE(ship->data);
+    if (ship->data)
+    {
+        struct explosion *pointer = (struct explosion*) ship->data;
+        DESTROY_SDL_TEXTURE(pointer->textures[0]);
+        DESTROY_SDL_TEXTURE(pointer->textures[1]);
+        DESTROY_SDL_TEXTURE(pointer->textures[2]);
+        free(pointer);
+        ship->data = NULL;
+    }
     FreeShip(ship);
 }
 
+#define EXPLOSION_TEXTURE_SIZE 100
+#define CreateExplosionTexture() SDL_CreateTexture(GameRenderer, SDL_PIXELFORMAT_RGBA32, \
+                                                 SDL_TEXTUREACCESS_TARGET, \
+                                                 EXPLOSION_TEXTURE_SIZE, EXPLOSION_TEXTURE_SIZE)
+
 void DrawExplosion(Ship *ship)
 {
+    if (!ship->counter)
+        return;
     if (ship->data)
-        DrawShipImage(ship, (SDL_Texture*) ship->data);
+        DrawShipImage(ship, ((struct explosion*) ship->data)->textures[ship->counter - 1]);
     else
     {
-        // 100 x 100 should provide 'good enough' resolution
-        SDL_Texture *texture = SDL_CreateTexture(GameRenderer, SDL_PIXELFORMAT_RGBA32,
-                                                 SDL_TEXTUREACCESS_TARGET,
-                                                 EXPLOSION_TEXTURE_SIZE, EXPLOSION_TEXTURE_SIZE);
-        if (texture)
+        struct explosion *data = calloc(1, sizeof(struct explosion));
+        if (!data)
+            return;
+        SDL_Texture *textures[3] = {
+            CreateExplosionTexture(),
+            CreateExplosionTexture(),
+            CreateExplosionTexture()
+        };
+        if (textures[0] && textures[1] && textures[2])
         {
             SDL_Vertex verts[EXPLOSION_VERTICIES];
             SDL_Color colors[3] = {
@@ -358,11 +385,15 @@ void DrawExplosion(Ship *ship)
                 verts[i].color = colors[rand() % 3];
                 verts[i].tex_coord = empty;
             }
-            SDL_SetRenderTarget(GameRenderer, texture);
-            SDL_RenderGeometry(GameRenderer, NULL, verts, EXPLOSION_VERTICIES, NULL, 0);
-            SDL_SetRenderTarget(GameRenderer, NULL);
-
-            ship->data = (void*) texture;
+            for (int i = 0; i < STAGES; i++)
+            {
+                SDL_SetRenderTarget(GameRenderer, textures[i]);
+                SDL_RenderGeometry(GameRenderer, NULL, verts,
+                                   (EXPLOSION_VERTICIES / STAGES) * (i + 1), NULL, 0);
+                SDL_SetRenderTarget(GameRenderer, NULL);
+                data->textures[i] = textures[i];
+            }
+            ship->data = data;
         }
     }
 }

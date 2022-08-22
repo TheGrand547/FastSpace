@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include "super_header.h"
 
+void PrintSDLError()
+{
+    printf("SDL_Error: %s\n", SDL_GetError());
+    SDL_ClearError();
+}
+
 void OutputImage(SDL_Surface *surf)
 {
 #ifndef RELEASE

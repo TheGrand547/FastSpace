@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
     ArrayAppend(ships, CreateCircle(2, 4, RIGHT));
     ArrayAppend(ships, CreateCircle(8, 4, LEFT));
-    ArrayAppend(ships, CreateExplosion(3, 3, RIGHT));
+    ArrayAppend(miscShips, CreateExplosion(3, 3, RIGHT));
 
     ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
     SDL_Event e;
@@ -118,12 +118,14 @@ int main(int argc, char **argv)
         uint8_t windowSize : 1;
         uint8_t bufferState : 1;
         uint8_t doCollision : 1;
-        uint8_t goob : 1;
+        uint8_t setTimer : 1;
+        uint8_t showCollisionMap : 1;
     } flags;
     flags.windowSize = SET_FLAG;
     flags.switchTurn = CLEAR_FLAG;
     flags.bufferState = CLEAR_FLAG;
     flags.doCollision = CLEAR_FLAG;
+    flags.setTimer = CLEAR_FLAG;
 
     // Why the hell did I do things like this
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
@@ -189,7 +191,7 @@ int main(int argc, char **argv)
                         break;
                     case SDL_SCANCODE_G:
                     {
-                        flags.goob = ~flags.goob;
+                        flags.showCollisionMap = ~flags.showCollisionMap;
                         Ship *bullet = CreateBullet(1, 6, RIGHT);
                         NULL_CONTINUE(bullet);
                         ColorShip(bullet, SDL_MapRGB(DisplayPixelFormat, 0x00, 0x80, 0xFF));
@@ -228,17 +230,30 @@ int main(int argc, char **argv)
         // AI turn handling
         if (turn == AI)
         {
-            turn = PLAYER_BUFFER;
-            turnTimer = frameStartTick;
+            turn = MISC_BUFFER;
 
             ArrayIterate(ships, ActivateShip);      // Activate enemies
             ArrayIterate(badBullets, ActivateShip); // Activate enemy bullets
 
             flags.doCollision = SET_FLAG;
+            flags.setTimer = SET_FLAG;
+        }
+        else if (turn == MISC)
+        {
+            turn = PLAYER_BUFFER;
+
+            ArrayIterate(miscShips, ActivateShip);
+            flags.doCollision = SET_FLAG;
+            flags.setTimer = SET_FLAG;
         }
 
         // Flag handling
         {
+            if (flags.setTimer)
+            {
+                turnTimer = frameStartTick;
+                flags.setTimer = CLEAR_FLAG;
+            }
             if (flags.windowSize)
             {
                 if (!GameField.spacing || !(GameField.spacing & 1))
@@ -280,20 +295,24 @@ int main(int argc, char **argv)
                 ArrayIterate(goodBullets, temp_collision_thing);
                 ArrayIterate(badBullets, temp_collision_thing);
                 ArrayIterate(ships, temp_collision_thing);
-
-                for (unsigned int y = 0; y < GameField.height; y++)
+                ArrayIterate(miscShips, temp_collision_thing);
+                if (flags.showCollisionMap)
                 {
-                    for (unsigned int x = 0; x < GameField.width; x++)
+                    for (unsigned int y = 0; y < GameField.height; y++)
                     {
-                        printf("%08p ", collisionHolder[IndexFromLocation(x, y)]);
+                        for (unsigned int x = 0; x < GameField.width; x++)
+                        {
+                            printf("%08p ", collisionHolder[IndexFromLocation(x, y)]);
+                        }
+                        printf("\n");
                     }
-                    printf("\n");
                 }
                 temp_collision_clean();
                 // Kill things that are dead
                 ArrayKillNonZero(badBullets, check_if_pointer_exists_in_collision, CleanupShip);
                 ArrayKillNonZero(goodBullets, check_if_pointer_exists_in_collision, CleanupShip);
                 ArrayKillNonZero(ships, check_if_pointer_exists_in_collision, CleanupShip);
+                ArrayKillNonZero(miscShips, check_if_pointer_exists_in_collision, CleanupShip);
 
                 flags.doCollision = CLEAR_FLAG;
             }
@@ -330,7 +349,8 @@ int main(int argc, char **argv)
                 if (!selected_texture)
                 {
                     char buffer[100];
-                    sprintf(buffer, "%s\nAction: %s", GetNameShip(s), HumanReadableStringFrom(s->previous));
+                    sprintf(buffer, "%s\nAction: %s\nToughness: %X",
+                            GetNameShip(s), HumanReadableStringFrom(s->previous), s->toughness);
                     selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
                     selected_rect.x = WindowSizeX() - selected_rect.w;
                     selected_rect.y = 200;
@@ -343,8 +363,6 @@ int main(int argc, char **argv)
         // TODO: Clean up misc stuff <- I don't know what this is referring to
         DrawShip(player);
         OutlineTile(player->x, player->y);
-        if (flags.goob)
-            OutlineTile(3, 1);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(miscShips, DrawShip);
         ArrayIterate(badBullets, DrawShip);
@@ -352,7 +370,6 @@ int main(int argc, char **argv)
         DrawButton(button);
 
         DebugDisplayDraw();
-
 
         // End of frame stuff
         SDL_RenderPresent(GameRenderer);
@@ -404,8 +421,6 @@ void temp_collision_thing(void *ship)
         {
             current->toughness -= existing->collision;
         }
-
-
     }
     else
     {
@@ -419,8 +434,13 @@ void temp_collision_clean()
     for (size_t index = 0; index < NumTiles(); index++)
     {
         Ship *current = (Ship*) collisionHolder[index];
-        if (current && !current->toughness && current->type != EXPLOSION)
+        if (current && !current->toughness)
         {
+            if (current->type == EXPLOSION)
+            {
+                collisionHolder[index] = NULL;
+                continue;
+            }
             Ship *exp = CreateExplosion(current->x, current->y, RIGHT);
             if (exp)
             {
