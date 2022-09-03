@@ -25,7 +25,7 @@ const char *HumanReadableStringFrom(Action action)
 
 // TODO: Make logger with freopen() on stderr
 
-static void DrawShipImage(Ship *ship, SDL_Texture *texture);
+static void DrawShipTexture(Ship *ship, SDL_Texture *texture);
 static void DrawShipType(Ship *ship);
 
 struct ShipData
@@ -164,6 +164,11 @@ void ActivateShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
+    if (OutOfBoundsShip(ship))
+    {
+        ship->toughness = 0;
+        return;
+    }
     Action action = ShipsData[ship->type].action(ship);
     ship->previous = action;
     if (action == OVERRIDE)
@@ -212,6 +217,8 @@ void DrawShip(void *data)
 {
     NULL_CHECK(data);
     Ship *ship = (Ship*) data;
+    if (OutOfBoundsShip(ship))
+        return;
     ShipsData[ship->type].draw(ship);
 }
 
@@ -358,7 +365,7 @@ void DrawExplosion(Ship *ship)
     if (!ship->counter)
         return;
     if (ship->data)
-        DrawShipImage(ship, ((struct explosion*) ship->data)->textures[ship->counter - 1]);
+        DrawShipTexture(ship, ((struct explosion*) ship->data)->textures[ship->counter - 1]);
     else
     {
         struct explosion *data = calloc(1, sizeof(struct explosion));
@@ -383,6 +390,7 @@ void DrawExplosion(Ship *ship)
                 verts[i].position = (SDL_FPoint) {rand() % EXPLOSION_TEXTURE_SIZE,
                                                   rand() % EXPLOSION_TEXTURE_SIZE};
                 verts[i].color = colors[rand() % 3];
+                verts[i].color.a = rand() % 0xFF;
                 verts[i].tex_coord = empty;
             }
             for (int i = 0; i < STAGES; i++)
@@ -395,15 +403,26 @@ void DrawExplosion(Ship *ship)
             }
             ship->data = data;
         }
+        else
+        {
+            DESTROY_SDL_TEXTURE(textures[0]);
+            DESTROY_SDL_TEXTURE(textures[1]);
+            DESTROY_SDL_TEXTURE(textures[2]);
+        }
     }
 }
 
-//** Internal Drawing Methods **//
+#define BORDER ((double) 0.05)
 
-static void DrawShipImage(Ship *ship, SDL_Texture *texture)
+//** Internal Drawing Methods **//
+static void DrawShipTexture(Ship *ship, SDL_Texture *texture)
 {
     NULL_CHECK(texture);
     SDL_Rect rect = GetTile(ship->x, ship->y);
+    rect.x += ceil(rect.w * BORDER);
+    rect.y += ceil(rect.h * BORDER);
+    rect.w *= (1.0 - 2 * BORDER);
+    rect.h *= (1.0 - 2 * BORDER);
     SDL_RendererFlip flip = SDL_FLIP_NONE;
     Facing facing = ship->facing;
     double angle = 0;
@@ -429,5 +448,5 @@ static void DrawShipType(Ship *ship)
         DrawBlankShip(ship);
         return;
     }
-    DrawShipImage(ship, texture);
+    DrawShipTexture(ship, texture);
 }

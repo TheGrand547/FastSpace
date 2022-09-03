@@ -68,22 +68,6 @@ int main(int argc, char **argv)
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 
-    /*
-    SDL_RendererInfo info;
-    *
-    for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
-    {
-        SDL_GetRenderDriverInfo(i, &info);
-        printf("Renderer Name: %s\n", info.name);
-        printf("%s %i\n", STR(SDL_RENDERER_ACCELERATED), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
-        printf("%s %i\n", STR(SDL_RENDERER_SOFTWARE), (info.flags & SDL_RENDERER_SOFTWARE) > 0);
-        printf("%s %i\n", STR(SDL_RENDERER_PRESENTVSYNC), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
-        printf("%s %i\n", STR(SDL_RENDERER_TARGETTEXTURE), (info.flags & SDL_RENDERER_ACCELERATED) > 0);
-    }*
-    SDL_GetRendererInfo(GameRenderer, &info);
-    printf("Renderer Name: %s\n", info.name);
-    printf("Render to Texture: %i %i\n", info.flags & SDL_RENDERER_TARGETTEXTURE, SDL_RENDERER_TARGETTEXTURE);*/
-
 
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
@@ -396,7 +380,8 @@ void temp_collision_thing(void *ship)
     NULL_CHECK(ship);
     // These two will almost assuredly be in registers, can't see why they wouldn't
     Ship *current = (Ship*) ship;
-
+    if (current->x > GameField.width || current->y > GameField.height)
+        return; // Out of bounds
     size_t location = (size_t) SHIP_INDEX_FROM_LOCATION(current);
     Ship *existing = collisionHolder[location];
     if (existing)
@@ -447,7 +432,6 @@ void temp_collision_clean()
                 exp->toughness = (current->collision > 0xF) ? 0xF : current->collision;
                 ArrayAppend(miscShips, (void*) exp);
             }
-            //printf("WE NEED AN EXPLOSION 'ERE %u %u\n", current->x, current->y);
             collisionHolder[index] = exp;
         }
     }
@@ -457,6 +441,8 @@ size_t check_if_pointer_exists_in_collision(void *data)
 {
     NULL_CHECK_RETURN(data, 0);
     Ship *ship = (Ship*) data;
+    if (OutOfBoundsShip(ship))
+        return 1; // Out of bounds and should die
     return collisionHolder[SHIP_INDEX_FROM_LOCATION(ship)] != data;
 }
 

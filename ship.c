@@ -34,6 +34,11 @@ int InTileShip(uint8_t x, uint8_t y, Ship *ship)
     return (ship->x == x) && (ship->y == y);
 }
 
+int OutOfBoundsShip(Ship *ship)
+{
+    return (ship->x >= GameField.width || ship->y >= GameField.height);
+}
+
 int VerifyShipsFreed()
 {
     return shipCount;
