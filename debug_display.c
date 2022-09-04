@@ -127,6 +127,7 @@ void DrawFpsDisplay()
         if (fpsTexture)
             SDL_DestroyTexture(fpsTexture);
         sprintf(fpsText, "FPS: %4.0lf", fps);
+        DESTROY_SDL_TEXTURE(fpsTexture);
         fpsTexture = FontRenderTextSize(GameRenderer, fpsText, 15, &fpsRect);
         SDL_SetTextureColorMod(fpsTexture, 0xFF, 0x00, 0x00);
         fpsStart = SDL_GetTicks();
@@ -163,6 +164,7 @@ static void DrawTurnDisplay()
 {
     NULL_CHECK(currentTurn);
     SDL_Rect turnRect;
+    DESTROY_SDL_TEXTURE(turnTexture);
     turnTexture = FontRenderTextSize(GameRenderer, turnNames[*currentTurn], 15, &turnRect);
     SetLocation(&turnRect, DisplaysPlace[EnumToIndex(SHOW_TURN)]);
     SDL_SetTextureColorMod(turnTexture, 0xFF, 0x00, 0x00);

@@ -31,7 +31,7 @@
 #define SET_FLAG 1
 #define CLEAR_FLAG 0
 
-// TODO: it's clera why this is bad
+// TODO: it's clear why this is bad
 size_t check_if_pointer_exists_in_collision(void *data);
 void temp_collision_clean();
 void temp_collision_thing(void *ship);
@@ -68,6 +68,9 @@ int main(int argc, char **argv)
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 
+    int a, b, c, d;
+    SDL_GetWindowBordersSize(GameWindow, &a, &b, &c, &d);
+    printf("%i %i %i %i\n", a, b, c, d);
 
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
@@ -110,6 +113,7 @@ int main(int argc, char **argv)
     flags.bufferState = CLEAR_FLAG;
     flags.doCollision = CLEAR_FLAG;
     flags.setTimer = CLEAR_FLAG;
+    flags.showCollisionMap = CLEAR_FLAG;
 
     // Why the hell did I do things like this
     EnableDebugDisplay(SHOW_FPS, TOP_RIGHT, NULL);
@@ -363,6 +367,7 @@ int main(int argc, char **argv)
 #endif // UNLIMITED_FPS
     }
     printf("Cleanup has started.\n");
+    free(collisionHolder);
     FreeShipImages();
     CleanupLibraries();
     ArrayAnnihilate(&ships, CleanupShip);

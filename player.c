@@ -28,6 +28,7 @@ Ship *CreatePlayer(uint8_t x, uint8_t y, Facing facing)
     {
         // TODO: there'll be a user struct thingy
         ship->type = USER;
+        ship->shields = 0xF;
         ColorShip(ship, SDL_MapRGBA(DisplayPixelFormat, 0xFF, 0x00, 0x00, 0xFF));
     }
     return ship;

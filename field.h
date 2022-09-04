@@ -21,4 +21,5 @@ unsigned int WindowSizeX();
 unsigned int WindowSizeY();
 
 void DrawField(Field *GameField);
+void SetupField();
 #endif // FIELD_H

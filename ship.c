@@ -85,12 +85,13 @@ void DrawNumbers(Ship *ship)
     SDL_Rect rect;
     SDL_Rect tile = GetTile(ship->x, ship->y);
     char buffer[4];
+    const unsigned int text_size = GameField.rectHeight * 0.2f;
     // TODO: This is sloppy and bad
     if (ship->toughness)
     {
         sprintf(buffer, "%X", ship->toughness);
         // TODO: make the number not be magic
-        texture = FontRenderTextSize(GameRenderer, buffer, 10, &rect);
+        texture = FontRenderTextSize(GameRenderer, buffer, text_size, &rect);
         if (texture)
         {
             rect.x = tile.x;
@@ -104,12 +105,12 @@ void DrawNumbers(Ship *ship)
     {
         sprintf(buffer, "%X", ship->shields);
         // TODO: make the number not be magic
-        texture = FontRenderTextSize(GameRenderer, buffer, 10, &rect);
+        texture = FontRenderTextSize(GameRenderer, buffer, text_size, &rect);
         if (texture)
         {
             rect.x = tile.x + tile.w - rect.w;
             rect.y = tile.y + tile.h - rect.h;
-            SDL_SetTextureColorMod(texture, 0x00, 0xFF, 0xFF);
+            SDL_SetTextureColorMod(texture, 0xAD, 0xE8, 0xFF);
             SDL_RenderCopy(GameRenderer, texture, NULL, &rect);
         }
         DESTROY_SDL_TEXTURE(texture);

@@ -8,6 +8,7 @@ int InitializeLibraries()
     int result = SDL_Init(SDL_INIT_FLAGS);
     if (!result)
     {
+        SetupField();
         GameWindow = SDL_CreateWindow("Fast Space Thing", SDL_WINDOW_POS, SDL_WINDOW_POS,
                                   WindowSizeX(), WindowSizeY(), SDL_WINDOW_FLAGS);
         int render_num = -1;
