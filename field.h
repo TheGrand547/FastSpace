@@ -7,9 +7,9 @@
 typedef struct
 {
     uint8_t width : 4, height : 4;
-    uint8_t rectWidth, rectHeight;
     uint8_t basePointX, basePointY;
     uint8_t spacing;
+    uint16_t rectSize;
 } Field;
 
 SDL_Rect GetTile(uint8_t x, uint8_t y);

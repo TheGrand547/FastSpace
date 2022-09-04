@@ -390,17 +390,22 @@ void DrawExplosion(Ship *ship)
                 verts[i].position = (SDL_FPoint) {rand() % EXPLOSION_TEXTURE_SIZE,
                                                   rand() % EXPLOSION_TEXTURE_SIZE};
                 verts[i].color = colors[rand() % 3];
-                verts[i].color.a = rand() % 0xFF;
+                verts[i].color.a = rand() % 0x80 + 0x80;
                 verts[i].tex_coord = empty;
             }
+            SDL_Texture *old = SDL_GetRenderTarget(GameRenderer);
+            SDL_BlendMode blend;
+            SDL_GetRenderDrawBlendMode(GameRenderer, &blend);
+            SDL_SetRenderDrawBlendMode(GameRenderer, SDL_BLENDMODE_BLEND);
             for (int i = 0; i < STAGES; i++)
             {
                 SDL_SetRenderTarget(GameRenderer, textures[i]);
                 SDL_RenderGeometry(GameRenderer, NULL, verts,
                                    (EXPLOSION_VERTICIES / STAGES) * (i + 1), NULL, 0);
-                SDL_SetRenderTarget(GameRenderer, NULL);
                 data->textures[i] = textures[i];
             }
+            SDL_SetRenderDrawBlendMode(GameRenderer, blend);
+            SDL_SetRenderTarget(GameRenderer, old);
             ship->data = data;
         }
         else

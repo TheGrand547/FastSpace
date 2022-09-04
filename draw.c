@@ -9,10 +9,10 @@ void DrawArrow(uint8_t x, uint8_t y, uint8_t facing)
 {
     Field copy = GameField;
     SDL_Renderer *renderer = GameRenderer;
-    const uint8_t w = copy.rectWidth * FACTOR;
-    const uint8_t h = copy.rectHeight * FACTOR;
-    SDL_FPoint center = {copy.basePointX + (x * (copy.rectWidth + copy.spacing) + w),
-                        copy.basePointX + (y * (copy.rectHeight + copy.spacing) + h)};
+    const uint8_t w = copy.rectSize * FACTOR;
+    const uint8_t h = copy.rectSize * FACTOR;
+    SDL_FPoint center = {copy.basePointX + (x * (copy.rectSize + copy.spacing) + w),
+                        copy.basePointX + (y * (copy.rectSize + copy.spacing) + h)};
     Color color = {0x00, 0x7F, 0xFF, 0xFF};
     SDL_Vertex points[3] = {{center, color, {0, 0}}, {center, color, {0, 0}}, {center, color, {0, 0}}};
     points[0].position.x += FacingX(facing - 1) * w * FACTOR;

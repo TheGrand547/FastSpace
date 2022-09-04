@@ -3,14 +3,24 @@
 #include "font.h"
 #include "super_header.h"
 
+#define FIRST_DISPLAY 0
+
 int InitializeLibraries()
 {
     int result = SDL_Init(SDL_INIT_FLAGS);
     if (!result)
     {
+        // TODO: Kill magic number 300
+        SDL_Rect rect;
+        SDL_GetDisplayUsableBounds(FIRST_DISPLAY, &rect);
         GameWindow = SDL_CreateWindow("Fast Space Thing", SDL_WINDOW_POS, SDL_WINDOW_POS,
-                                  WindowSizeX(), WindowSizeY(), SDL_WINDOW_FLAGS);
-        SDL_HideWindow(GameWindow);
+                                  rect.h + 300, rect.h, SDL_WINDOW_FLAGS);
+        int top, left, bottom, right;
+        SDL_GetWindowBordersSize(GameWindow, &top, &left, &bottom, &right);
+        SDL_SetWindowSize(GameWindow, rect.h + 300, rect.h - top);
+        SDL_SetWindowPosition(GameWindow, SDL_WINDOWPOS_CENTERED, top);
+        SDL_ShowWindow(GameWindow);
+
         int render_num = -1;
         SDL_RendererInfo info;
         for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)

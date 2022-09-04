@@ -85,7 +85,7 @@ void DrawNumbers(Ship *ship)
     SDL_Rect rect;
     SDL_Rect tile = GetTile(ship->x, ship->y);
     char buffer[4];
-    const unsigned int text_size = GameField.rectHeight * 0.2f;
+    const unsigned int text_size = GameField.rectSize * 0.2f;
     // TODO: This is sloppy and bad
     if (ship->toughness)
     {

@@ -23,9 +23,7 @@
 #define WIDTH 10
 #define HEIGHT 10
 
-#define RECT_X 50
-#define RECT_Y 50
-
+#define RECT_SIZE 50
 #define SPACING 5
 
 #define SET_FLAG 1
@@ -39,7 +37,7 @@ void temp_collision_thing(void *ship);
 
 SDL_Renderer *GameRenderer;
 SDL_Window *GameWindow;
-Field GameField = {WIDTH, HEIGHT, RECT_X, RECT_Y, SPACING, SPACING, SPACING};
+Field GameField = {WIDTH, HEIGHT, 0, 0, SPACING, RECT_SIZE};
 
 // TODO: THIS IS HORRIFIC PLEASE FIX IT WHEN YOU GET TO MENUS AND STUFF
 static struct
@@ -127,8 +125,11 @@ int main(int argc, char **argv)
     void **dp = NULL; // Dummy double pointer(no immature jokes)
     UNUSED(dp);
 
+    int FEW, FEWER;
+    SDL_GetWindowPosition(GameWindow, &FEW, &FEWER);
+    printf("WINPOS: %i %i\n", FEW, FEWER);
     SetupField();
-    SDL_ShowWindow(GameWindow);
+
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -242,12 +243,13 @@ int main(int argc, char **argv)
             }
             if (flags.windowSize)
             {
-                if (GameField.spacing > GameField.rectWidth * 0.1f)
-                    GameField.spacing = GameField.rectWidth * 0.1f;
+                if (GameField.spacing > GameField.rectSize * 0.1f)
+                    GameField.spacing = GameField.rectSize * 0.1f;
                 if (!GameField.spacing || !(GameField.spacing & 1))
                     GameField.spacing += 1;
+                /*
                 SDL_SetWindowSize(GameWindow, WindowSizeX(), WindowSizeY());
-                SDL_SetWindowPosition(GameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+                SDL_SetWindowPosition(GameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);*/
                 button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
                 button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
                 flags.windowSize = CLEAR_FLAG;
@@ -351,7 +353,6 @@ int main(int argc, char **argv)
 
         // TODO: Clean up misc stuff <- I don't know what this is referring to
         DrawShip(player);
-        OutlineTile(player->x, player->y);
         ArrayIterate(ships, DrawShip);
         ArrayIterate(miscShips, DrawShip);
         ArrayIterate(badBullets, DrawShip);
