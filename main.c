@@ -68,10 +68,6 @@ int main(int argc, char **argv)
     SDL_VERSION(&version);
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 
-    int a, b, c, d;
-    SDL_GetWindowBordersSize(GameWindow, &a, &b, &c, &d);
-    printf("%i %i %i %i\n", a, b, c, d);
-
     Array* ships = ArrayNew();
     Ship *player = CreatePlayer(0, 0, RIGHT);
 
@@ -131,6 +127,8 @@ int main(int argc, char **argv)
     void **dp = NULL; // Dummy double pointer(no immature jokes)
     UNUSED(dp);
 
+    SetupField();
+    SDL_ShowWindow(GameWindow);
     while (loop)
     {
         const uint32_t frameStartTick = SDL_GetTicks();
@@ -244,9 +242,12 @@ int main(int argc, char **argv)
             }
             if (flags.windowSize)
             {
+                if (GameField.spacing > GameField.rectWidth * 0.1f)
+                    GameField.spacing = GameField.rectWidth * 0.1f;
                 if (!GameField.spacing || !(GameField.spacing & 1))
                     GameField.spacing += 1;
                 SDL_SetWindowSize(GameWindow, WindowSizeX(), WindowSizeY());
+                SDL_SetWindowPosition(GameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
                 button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
                 button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
                 flags.windowSize = CLEAR_FLAG;

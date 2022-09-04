@@ -63,11 +63,17 @@ void DrawField(Field *field)
 
 void SetupField()
 {
+    // TODO: Investigate SDL_GetWindowBorderSize
+    int a, b, c, d;
+    SDL_GetWindowBordersSize(GameWindow, &a, &b, &c, &d);
+    printf("%i %i %i %i\n", a, b, c, d);
+
     /*
     SDL_DisplayMode display;
     SDL_GetDesktopDisplayMode(FIRST_DISPLAY, &display);*/
     SDL_Rect rect;
     SDL_GetDisplayUsableBounds(FIRST_DISPLAY, &rect);
+    rect.h -= a + b;
     while (WindowSizeY() < (unsigned int) rect.h)
         GameField.rectHeight += 5;
     GameField.rectHeight -= 5;

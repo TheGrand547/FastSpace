@@ -8,9 +8,9 @@ int InitializeLibraries()
     int result = SDL_Init(SDL_INIT_FLAGS);
     if (!result)
     {
-        SetupField();
         GameWindow = SDL_CreateWindow("Fast Space Thing", SDL_WINDOW_POS, SDL_WINDOW_POS,
                                   WindowSizeX(), WindowSizeY(), SDL_WINDOW_FLAGS);
+        SDL_HideWindow(GameWindow);
         int render_num = -1;
         SDL_RendererInfo info;
         for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
