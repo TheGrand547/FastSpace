@@ -94,6 +94,15 @@ static struct ShipData ShipsData[LAST_SHIP] = {
         NoneImageData,
         NULL,
         NULL,
+    },
+    { // Floating debris
+        CreateDebris,
+        ActivateDebris,
+        FreeDebris,
+        DrawDebris,
+        NoneImageData,
+        NULL,
+        "Name"
     }
 };
 
@@ -415,6 +424,24 @@ void DrawExplosion(Ship *ship)
             DESTROY_SDL_TEXTURE(textures[2]);
         }
     }
+}
+
+// Debris
+
+Ship *CreateDebris(uint8_t x, uint8_t y, Facing facing)
+{
+    Ship *ship = CreateGenericShip(x, y, facing);
+    if (ship)
+    {
+        ship->counter = 3;
+        ship->type = DEBRIS;
+    }
+    return ship;
+}
+
+Action ActivateDebris(Ship *ship)
+{
+    return OVERRIDE;
 }
 
 #define BORDER ((double) 0.05)

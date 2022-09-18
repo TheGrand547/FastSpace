@@ -21,6 +21,8 @@ unsigned int NumTiles()
     return GameField.width * GameField.height;
 }
 
+static unsigned int windowX, windowY;
+
 unsigned int WindowSizeX()
 {
     // TODO: Figure out this 300 magic number
@@ -61,7 +63,7 @@ void DrawField(Field *field)
 
 void SetupField()
 {
-    // TODO: Something regarding
+    // TODO: Something regarding vertically rotated monitors
     /*
     GameField.height * (GameField.rectSize + GameField.spacing)
             + GameField.spacing + GameField.basePointY
@@ -78,42 +80,18 @@ void SetupField()
     int _dummy, _C;
     SDL_GetWindowSize(GameWindow, &_dummy, &_C);
     double C = (double) _C, A = (double) GameField.height, B = (double) GameField.spacing,
-        AB = A * B;
+        AB = A * (B - 1);
     double equation = (C - AB - B) / A;
     if (FLOAT_EQUAL(equation, floor(equation)))
     {
         GameField.rectSize = (uint16_t) equation;
         GameField.basePointX = 0;
-        GameField.basePointY = 0;
     }
     else
     {
         double difference = C - AB - B - A * floor(equation);
         GameField.rectSize = (uint16_t) floor(equation);
         GameField.basePointX = difference / 2.0f;
-        GameField.basePointX = difference / 2.0f;
-        //printf("%lf %lf %lf\n", equation, floor(equation), C - AB - B - A * floor(equation));
     }
-    /*
-    // TODO: Investigate SDL_GetWindowBorderSize
-    int top, left, bottom, right;
-    SDL_GetWindowBordersSize(GameWindow, &top, &left, &bottom, &right);
-    printf("%i %i %i %i\n", top, left, bottom, right);
-
-    int ren_w, ren_h;
-    SDL_GetRendererOutputSize(GameRenderer, &ren_w, &ren_h);
-    SDL_DisplayMode display;
-    SDL_GetDesktopDisplayMode(FIRST_DISPLAY, &display);
-    SDL_Rect rect, rect2;
-    SDL_GetDisplayUsableBounds(FIRST_DISPLAY, &rect);
-    SDL_GetDisplayBounds(FIRST_DISPLAY, &rect2);
-    SDL_GetWindowSize(GameWindow, &left, &right);
-    printf("Usable Bounds %i %i\nWindow Size: %i %i \
-           \nRenderer Output: %i %i\nDisplay Bounds: %i %i\n",
-           rect.w, rect.h, left, right, ren_w, ren_h, rect2.w, rect2.h);
-    rect.h -= top + bottom;
-    while (WindowSizeY() < (unsigned int) rect.h)
-        GameField.rectSize++;
-    GameField.rectSize--;
-    GameField.rectSize = GameField.rectSize;*/
+    GameField.basePointY = GameField.basePointX;
 }

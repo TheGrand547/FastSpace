@@ -26,6 +26,8 @@ int InitializeLibraries()
         for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
         {
             SDL_GetRenderDriverInfo(i, &info);
+            // direct3d on intel some problems with render targets for some reason, so ignore
+            // it if other renderers are available
             if ((info.flags & (RENDERER_FLAGS)) && strcmp(info.name, "direct3d"))
             {
                 render_num = i;

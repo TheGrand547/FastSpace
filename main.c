@@ -24,7 +24,7 @@
 #define HEIGHT 10
 
 #define RECT_SIZE 50
-#define SPACING 5
+#define SPACING 3
 
 #define SET_FLAG 1
 #define CLEAR_FLAG 0
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     printf("SDL VERSION: %i %i %i\n", version.major, version.minor, version.patch);
 
     Array* ships = ArrayNew();
-    Ship *player = CreatePlayer(0, 0, RIGHT);
+    Ship *player = CreatePlayer(1, 0, RIGHT);
 
     Button *button = ButtonCreate((SDL_Rect) {400, 400, 50, 50}, VoidButton);
 
@@ -83,6 +83,7 @@ int main(int argc, char **argv)
 
     ArrayAppend(ships, CreateCircle(2, 4, RIGHT));
     ArrayAppend(ships, CreateCircle(8, 4, LEFT));
+    ArrayAppend(ships, CreateDebris(6, 1, RIGHT));
     ArrayAppend(miscShips, CreateExplosion(3, 3, RIGHT));
 
     ColorShip(player, SDL_MapRGB(DisplayPixelFormat, 0xFF, 0x00, 0x00));
@@ -125,9 +126,6 @@ int main(int argc, char **argv)
     void **dp = NULL; // Dummy double pointer(no immature jokes)
     UNUSED(dp);
 
-    int FEW, FEWER;
-    SDL_GetWindowPosition(GameWindow, &FEW, &FEWER);
-    printf("WINPOS: %i %i\n", FEW, FEWER);
     SetupField();
 
     while (loop)
@@ -247,9 +245,7 @@ int main(int argc, char **argv)
                     GameField.spacing = GameField.rectSize * 0.1f;
                 if (!GameField.spacing || !(GameField.spacing & 1))
                     GameField.spacing += 1;
-                /*
-                SDL_SetWindowSize(GameWindow, WindowSizeX(), WindowSizeY());
-                SDL_SetWindowPosition(GameWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);*/
+                SetupField();
                 button->rect.x = WindowSizeX() - 100 - button->rect.w / 2;
                 button->rect.y = WindowSizeY() - 100 - button->rect.h / 2;
                 flags.windowSize = CLEAR_FLAG;
@@ -342,6 +338,7 @@ int main(int argc, char **argv)
                     char buffer[100];
                     sprintf(buffer, "%s\nAction: %s\nToughness: %X",
                             GetNameShip(s), HumanReadableStringFrom(s->previous), s->toughness);
+                    DESTROY_SDL_TEXTURE(selected_texture);
                     selected_texture = FontRenderTextSize(GameRenderer, buffer, 15, &selected_rect);
                     selected_rect.x = WindowSizeX() - selected_rect.w;
                     selected_rect.y = 200;

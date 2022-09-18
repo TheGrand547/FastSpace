@@ -13,6 +13,7 @@ typedef enum
     BULLET,
     PATROLLER,
     EXPLOSION,
+    DEBRIS,
     LAST_SHIP // Up to 16 so it fits in Uint8 : 4
 } ShipType;
 
@@ -58,6 +59,12 @@ Ship *CreateExplosion(uint8_t x, uint8_t y, Facing facing);
 Action ActivateExplosion(Ship *ship);
 void FreeExplosion(Ship *ship);
 void DrawExplosion(Ship *ship);
+
+/** Debris **/
+Ship *CreateDebris(uint8_t x, uint8_t y, Facing facing);
+Action ActivateDebris(Ship *ship);
+#define FreeDebris FreeShip
+#define DrawDebris DrawExplosion
 
 // Temporary testing stuff
 void ShootGamer(Ship *ship);
