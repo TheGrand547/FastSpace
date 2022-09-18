@@ -9,7 +9,7 @@
 // Generic defines
 #define STR(x) #x
 #define CONST_STR(x) const char * x##_str = STR(x)
-#define UNUSED(x) (void)(x)
+#define UNUSED(x) (void)((x))
 #define FLOAT_EPSILON 0.0001
 #define FLOAT_EQUAL(x, y) (fabs((x) - (y)) < FLOAT_EPSILON)
 #define NULL_CHECK(x) if (!(x)) return
@@ -18,7 +18,7 @@
 #define SAFE_STATIC_ARRAY_LENGTH(array, type) sizeof((array)) / sizeof((type))
 #define STATIC_ARRAY_LENGTH(array) sizeof((array)) / sizeof((array)[0])
 
-#define NULL_INT 0
+#define NULL_INT (0)
 
 // SDL2 defines
 #define DESTROY_SDL_TEXTURE(x) if ((x)) SDL_DestroyTexture((x)); (x) = NULL
@@ -46,8 +46,8 @@ typedef enum
 } Turn;
 
 #define HIGH 0xFF
-#define MID 0x80
-#define LOW 0x00
+#define MID  0x80
+#define LOW  0x00
 typedef SDL_Color Color;
 
 extern SDL_Renderer *GameRenderer;

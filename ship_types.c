@@ -1,4 +1,5 @@
 #include "ship_types.h"
+#include <math.h>
 #include <SDL2/SDL_log.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,6 @@ const char *HumanReadableStringFrom(Action action)
         case TURN_RIGHT: return "Turning Right";
         case TURN_AROUND: return "Turning Around";
         case SHOOT: return "Firing Weapons";
-        case NO_ACTION: return "Developer Messed Up";
         case NO_GENERIC_ACTION: return "Coasting";
         case OVERRIDE: return "Gravitationally Stable";
         default: return "Developer Messed Up";
@@ -298,7 +298,7 @@ Ship *CreateBullet(uint8_t x, uint8_t y, Facing facing)
     {
         bullet->counter = 0;
         bullet->type = BULLET;
-        bullet->toughness = 14;
+        bullet->toughness = 0x4;
     }
     return bullet;
 }
@@ -365,7 +365,7 @@ void FreeExplosion(Ship *ship)
 }
 
 #define EXPLOSION_TEXTURE_SIZE 100
-#define CreateExplosionTexture() SDL_CreateTexture(GameRenderer, SDL_PIXELFORMAT_RGBA32, \
+#define CreateTextureCanvas() SDL_CreateTexture(GameRenderer, SDL_PIXELFORMAT_RGBA32, \
                                                  SDL_TEXTUREACCESS_TARGET, \
                                                  EXPLOSION_TEXTURE_SIZE, EXPLOSION_TEXTURE_SIZE)
 
@@ -381,9 +381,9 @@ void DrawExplosion(Ship *ship)
         if (!data)
             return;
         SDL_Texture *textures[3] = {
-            CreateExplosionTexture(),
-            CreateExplosionTexture(),
-            CreateExplosionTexture()
+            CreateTextureCanvas(),
+            CreateTextureCanvas(),
+            CreateTextureCanvas()
         };
         if (textures[0] && textures[1] && textures[2])
         {
@@ -435,13 +435,65 @@ Ship *CreateDebris(uint8_t x, uint8_t y, Facing facing)
     {
         ship->counter = 3;
         ship->type = DEBRIS;
+        ship->color = (SDL_Color) {0xFF, 0xFF, 0xFF, 0xFF};
     }
     return ship;
 }
 
 Action ActivateDebris(Ship *ship)
 {
+    UNUSED(ship);
     return OVERRIDE;
+}
+
+void FreeDebris(Ship *ship)
+{
+    DESTROY_SDL_TEXTURE(ship->data);
+    FreeShip(ship);
+}
+
+void DrawDebris(Ship *ship)
+{
+    // Probably replace the get ship data function with one based on functions that
+    // generate these ""art"" things
+    if (ship->data)
+        DrawShipTexture(ship, (SDL_Texture*) ship->data);
+    else
+    {
+        SDL_Texture *texture = CreateTextureCanvas();
+        if (texture)
+        {
+            // Exceptionally sloppily generates geometry based on a regular octagon
+            #define POINT_COUNT 3 * 5
+            SDL_FPoint points[8];
+            for (size_t i = 0; i < STATIC_ARRAY_LENGTH(points); i++)
+            {
+                points[i].x = 50.f + 40 * cos(M_PI / 4 * i);
+                points[i].y = 50.f + 40 * sin(M_PI / 4 * i);
+            }
+            SDL_Vertex vertex[POINT_COUNT];
+            for (size_t i = 0; i < POINT_COUNT; i++)
+            {
+                do
+                {
+                    vertex[i].position = points[rand() % STATIC_ARRAY_LENGTH(points)];
+                } while (i > 0 && (vertex[i - 1].position.x == vertex[i].position.x
+                                   && vertex[i - 1].position.y == vertex[i].position.y));
+                uint8_t color = rand() % 80 + 0x20;
+                vertex[i].color = (SDL_Color) {color, color, color, 0xFF - color % 0x10};
+                vertex[i].tex_coord = (SDL_FPoint) {0.f, 0.f};
+            }
+            SDL_BlendMode blend;
+            SDL_GetRenderDrawBlendMode(GameRenderer, &blend);
+            SDL_SetRenderDrawBlendMode(GameRenderer, SDL_BLENDMODE_BLEND);
+            SDL_Texture *old = SDL_GetRenderTarget(GameRenderer);
+            SDL_SetRenderTarget(GameRenderer, texture);
+            SDL_RenderGeometry(GameRenderer, NULL, vertex, POINT_COUNT, NULL, 0);
+            SDL_SetRenderTarget(GameRenderer, old);
+            SDL_SetRenderDrawBlendMode(GameRenderer, blend);
+            ship->data = (void*) texture;
+        }
+    }
 }
 
 #define BORDER ((double) 0.05)

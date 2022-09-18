@@ -63,8 +63,8 @@ void DrawExplosion(Ship *ship);
 /** Debris **/
 Ship *CreateDebris(uint8_t x, uint8_t y, Facing facing);
 Action ActivateDebris(Ship *ship);
-#define FreeDebris FreeShip
-#define DrawDebris DrawExplosion
+void FreeDebris(Ship *ship);
+void DrawDebris(Ship *ship);
 
 // Temporary testing stuff
 void ShootGamer(Ship *ship);
